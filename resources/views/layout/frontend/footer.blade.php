@@ -17,8 +17,8 @@
         <li><a href="https://urgecare.in/Urgecare/privateambulanceservicenearme.html">Private Ambulance Service Near Me in Pune</a></li>
         <li><a href="https://urgecare.in/Urgecare/trainambulanceservice.html">Train Ambulance Service in Pune</a></li>
 
-        <li><a href="https://urgecare.in/Urgecare/airambulanceservice.html">Air Amulance Service in Pune</a></li>
-        <li><a href="https://urgecare.in/Urgecare/puneambulancenumber.html">Pune Ambulance Numer in Pune</a></li>
+        <li><a href="https://urgecare.in/Urgecare/airambulanceservice.html">Air Ambulance Service in Pune</a></li>
+        <li><a href="https://urgecare.in/Urgecare/puneambulancenumber.html">Pune Ambulance Number in Pune</a></li>
         <li><a href="https://urgecare.in/Urgecare/icuambulanceservice.html">ICU Ambulance Service in Pune</a></li>
       </ul>
       <hr>
