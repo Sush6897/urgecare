@@ -325,7 +325,7 @@
                                     @foreach($hospital->contacts as $contact)
                                         <div class="row contact-row mb-2">
                                             <div class="col-md-10">
-                                                <input type="text" name="contacts[]" class="form-control" value="{{ $contact->contact }}" placeholder="Enter Contact Number" required>
+                                                <input type="text" name="contacts[]" class="form-control contact-input" maxlength="10" pattern="\d{10}" title="Please enter a 10-digit phone number" value="{{ $contact->contact }}" placeholder="Enter Contact Number" required>
                                             </div>
                                             <div class="col-md-2">
                                                 <button type="button" class="btn btn-danger remove-contact">Remove</button>
@@ -335,7 +335,7 @@
                                     @if($hospital->contacts->isEmpty())
                                         <div class="row contact-row mb-2">
                                             <div class="col-md-10">
-                                                <input type="text" name="contacts[]" class="form-control" placeholder="Enter Contact Number" required>
+                                                <input type="text" name="contacts[]" class="form-control contact-input" maxlength="10" pattern="\d{10}" title="Please enter a 10-digit phone number" placeholder="Enter Contact Number" required>
                                             </div>
                                             <div class="col-md-2">
                                                 <button type="button" class="btn btn-danger remove-contact">Remove</button>
@@ -467,7 +467,7 @@
             var newRow = `
                 <div class="row contact-row mb-2">
                     <div class="col-md-10">
-                        <input type="text" name="contacts[]" class="form-control" placeholder="Enter Contact Number" required>
+                        <input type="text" name="contacts[]" class="form-control contact-input" placeholder="Enter Contact Number" maxlength="10" pattern="\d{10}" title="Please enter a 10-digit phone number" required>
                     </div>
                     <div class="col-md-2">
                         <button type="button" class="btn btn-danger remove-contact">Remove</button>
@@ -514,6 +514,14 @@
             });
         });
         
+        // Restrict Contact inputs to numbers only and max 10 digits
+        $(document).on('input', '.contact-input', function() {
+            this.value = this.value.replace(/[^0-9]/g, ''); // Remove non-numeric
+            if (this.value.length > 10) {
+                this.value = this.value.slice(0, 10); // Enforce max 10
+            }
+        });
+
         // Open modal if validation fails
         @if ($errors->any())
             $('#edit_hospital_details').modal('show');

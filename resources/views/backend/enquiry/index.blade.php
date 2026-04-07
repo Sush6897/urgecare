@@ -14,6 +14,55 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-body">
+                <form action="{{ route('enquiry.index') }}" method="GET">
+                    <div class="row filter-row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Patient Name</label>
+                                <input type="text" name="patient_name" class="form-control" value="{{ request('patient_name') }}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Hospital</label>
+                                <select name="hospital_id" class="form-control">
+                                    <option value="">--All Hospitals--</option>
+                                    @foreach($hospitals as $hosp)
+                                        <option value="{{ $hosp->id }}" {{ request('hospital_id') == $hosp->id ? 'selected' : '' }}>{{ $hosp->hospital_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="">--All Status--</option>
+                                    <option value="success" {{ request('status') == 'success' ? 'selected' : '' }}>Success</option>
+                                    <option value="notconnected" {{ request('status') == 'notconnected' ? 'selected' : '' }}>Notconnected</option>
+                                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <button type="submit" class="btn btn-primary btn-block"><i class="fe fe-search"></i> Search </button>
+                                    <a href="{{ route('enquiry.index') }}" class="btn btn-secondary btn-block">Reset</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-body">
                 <div class="table-responsive">
                     <div class="table-responsive">
                         <table class="datatable table table-hover table-center mb-0">
@@ -79,32 +128,4 @@
         </div>
     </div>
 </div>
-<script src="{{asset('/backend/assets/js/jquery-3.2.1.min.js')}}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        @if(Session::has('error'))
-        iziToast.error({
-            title: 'error',
-            message: '{{ Session::get("error") }}',
-            backgroundColor: '#f70400', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-close', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-
-        @if(Session::has('success'))
-        iziToast.success({
-            title: 'Success',
-            message: '{{ Session::get("success") }}',
-            backgroundColor: '#40a7a3', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-check', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-    });
-</script>
 @endsection

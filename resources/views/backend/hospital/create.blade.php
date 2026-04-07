@@ -58,7 +58,7 @@
                             <div class="row contact-row mb-2">
 
                                 <div class="col-md-10">
-                                    <input type="text" name="contacts[]" class="form-control" placeholder="Enter Contact Number">
+                                    <input type="text" name="contacts[]" class="form-control contact-input" maxlength="10" pattern="\d{10}" title="Please enter a 10-digit phone number" required placeholder="Enter Contact Number">
                                 </div>
 
                                 <div class="col-md-2">
@@ -127,50 +127,7 @@
                     </div>
                 
                     
-                    <div class="form-group col-md-6">
-                        <label for="features1">Feature 1</label>
-                        <input type="text" class="form-control" id="features1" name="features[features1]" value="{{ old('features.features1') }}">
-                        @error('features.features1')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        @error('features')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group col-md-6">
-                        <label for="features2">Feature 2</label>
-                        <input type="text" class="form-control" id="features2" name="features[features2]" value="{{ old('features.features2') }}">
-                        @error('features.features2')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        @error('features')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group col-md-6">
-                        <label for="features3">Feature 3</label>
-                        <input type="text" class="form-control" id="features3" name="features[features3]" value="{{ old('features.features3') }}">
-                        @error('features.features3')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        @error('features')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group col-md-6">
-                        <label for="features4">Feature 4</label>
-                        <input type="text" class="form-control" id="features4" name="features[features4]" value="{{ old('features.features4') }}">
-                        @error('features.features4')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        @error('features')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-               
+                   
                     <div class="form-group col-md-6">
                         <label for="gmap">Google Map Link</label>
                         <input type="text" class="form-control" id="gmap" name="gmap" value="{{ old('gmap') }}" required>
@@ -227,7 +184,14 @@
     </div>
 
 </div>
-<script src="{{asset('/backend/assets/js/jquery-3.2.1.min.js')}}"></script>
+<script src="{{asset('/backend/assets/js/jquery-3.2.1.min.js')}}">        // Restrict Contact inputs to numbers only and max 10 digits
+        $(document).on('input', '.contact-input', function() {
+            this.value = this.value.replace(/[^0-9]/g, ''); // Remove non-numeric
+            if (this.value.length > 10) {
+                this.value = this.value.slice(0, 10); // Enforce max 10
+            }
+        });
+</script>
 
 <script>
     $('#gmap').on('focusout', function(){
@@ -273,7 +237,7 @@ $('#add-contact').click(function(){
         <div class="row contact-row mb-2">
 
             <div class="col-md-10">
-                <input type="text" name="contacts[]" class="form-control" placeholder="Enter Contact Number">
+                <input type="text" name="contacts[]" class="form-control contact-input" maxlength="10" pattern="\d{10}" title="Please enter a 10-digit phone number" required placeholder="Enter Contact Number">
             </div>
 
             <div class="col-md-2">
@@ -294,5 +258,12 @@ $(document).on('click','.remove-contact',function(){
     $(this).closest('.contact-row').remove();
 
 });
+        // Restrict Contact inputs to numbers only and max 10 digits
+        $(document).on('input', '.contact-input', function() {
+            this.value = this.value.replace(/[^0-9]/g, ''); // Remove non-numeric
+            if (this.value.length > 10) {
+                this.value = this.value.slice(0, 10); // Enforce max 10
+            }
+        });
 </script>
 @endsection

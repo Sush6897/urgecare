@@ -30,8 +30,23 @@ class PartnerController extends Controller
         return redirect()->back()->with('success', 'Partner details saved successfully.');
     }
 
-    public function index(){
-        $partners= Partner::all();
+    public function index(Request $request){
+        $query = Partner::query();
+
+        if ($request->filled('name')) {
+            $query->where('first_name', 'LIKE', '%' . $request->name . '%')
+                  ->orWhere('last_name', 'LIKE', '%' . $request->name . '%');
+        }
+
+        if ($request->filled('business_name')) {
+            $query->where('business_name', 'LIKE', '%' . $request->business_name . '%');
+        }
+
+        if ($request->filled('email')) {
+            $query->where('email', 'LIKE', '%' . $request->email . '%');
+        }
+
+        $partners = $query->latest()->get();
         return view('backend.partner', compact('partners'));
     }
     public function updateStatus(Request $request, $id)

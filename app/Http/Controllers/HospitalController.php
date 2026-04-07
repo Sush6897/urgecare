@@ -15,11 +15,29 @@ class HospitalController extends Controller
 {
     //
 
-    public function index() {
-        $hospitals = Hospital::all();
+    public function index(Request $request) {
+        $query = Hospital::with('contacts');
 
-    // Pass the data to the view
-    return view('backend.hospital.index', compact('hospitals'));
+        if ($request->filled('hospital_name')) {
+            $query->where('hospital_name', 'LIKE', '%' . $request->hospital_name . '%');
+        }
+
+        if ($request->filled('city')) {
+            $query->where('city', 'LIKE', '%' . $request->city . '%');
+        }
+
+        if ($request->filled('area')) {
+            $query->where('area', 'LIKE', '%' . $request->area . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $hospitals = $query->latest()->get();
+
+        // Pass the data to the view
+        return view('backend.hospital.index', compact('hospitals'));
     }
     public function create()
     {
@@ -41,13 +59,7 @@ class HospitalController extends Controller
 
             // NEW contacts validation
             'contacts' => 'required|array|min:1',
-            'contacts.*' => 'required|string|max:20',
-
-            'features.features1' => ['nullable', 'string', 'max:255'],
-            'features.features2' => ['nullable', 'string', 'max:255'],
-            'features.features3' => ['nullable', 'string', 'max:255'],
-            'features.features4' => ['nullable', 'string', 'max:255'],
-            'features' => ['nullable', new AtLeastThreeFeatures()],
+            'contacts.*' => 'required|digits:10',
 
             'gmap' => 'required|url',
             'longitude' => 'required|string|max:255',
@@ -58,20 +70,7 @@ class HospitalController extends Controller
             'type' => 'required|array',
             'type.*' => 'in:emergency,non-emergency',
         ], [
-
-            'features.features1.string' => 'Feature 1 must be a string.',
-            'features.features1.max' => 'Feature 1 may not be greater than 255 characters.',
-
-            'features.features2.string' => 'Feature 2 must be a string.',
-            'features.features2.max' => 'Feature 2 may not be greater than 255 characters.',
-
-            'features.features3.string' => 'Feature 3 must be a string.',
-            'features.features3.max' => 'Feature 3 may not be greater than 255 characters.',
-
-            'features.features4.string' => 'Feature 4 must be a string.',
-            'features.features4.max' => 'Feature 4 may not be greater than 255 characters.',
-
-            'features' => 'At least three features are required.',
+            'contacts.required' => 'At least one contact is required.',
         ]);
 
 
@@ -91,11 +90,6 @@ class HospitalController extends Controller
             'city' => $validatedData['city'],
             'pincode' => $validatedData['pincode'],
 
-            'features1' => $validatedData['features']['features1'] ?? null,
-            'features2' => $validatedData['features']['features2'] ?? null,
-            'features3' => $validatedData['features']['features3'] ?? null,
-            'features4' => $validatedData['features']['features4'] ?? null,
-
             'gmap' => $validatedData['gmap'],
             'longitude' => $validatedData['longitude'],
             'latitude' => $validatedData['latitude'],
@@ -104,6 +98,7 @@ class HospitalController extends Controller
 
             'emergency' => $emergency,
             'nonemergency' => $nonemergency,
+            'contact' => $validatedData['contacts'][0] ?? null, // Primary contact
         ]);
 
 
@@ -146,13 +141,7 @@ class HospitalController extends Controller
 
             // NEW contacts validation
             'contacts' => 'required|array|min:1',
-            'contacts.*' => 'required|string|max:20',
-
-            'features.features1' => ['nullable', 'string', 'max:255'],
-            'features.features2' => ['nullable', 'string', 'max:255'],
-            'features.features3' => ['nullable', 'string', 'max:255'],
-            'features.features4' => ['nullable', 'string', 'max:255'],
-            'features' => ['nullable', new AtLeastThreeFeatures()],
+            'contacts.*' => 'required|digits:10',
 
             'gmap' => 'required|url',
             'longitude' => 'required|string|max:255',
@@ -182,11 +171,6 @@ class HospitalController extends Controller
             'area' => $validatedData['area'],
             'pincode' => $validatedData['pincode'],
 
-            'features1' => $validatedData['features']['features1'] ?? null,
-            'features2' => $validatedData['features']['features2'] ?? null,
-            'features3' => $validatedData['features']['features3'] ?? null,
-            'features4' => $validatedData['features']['features4'] ?? null,
-
             'gmap' => $validatedData['gmap'],
             'longitude' => $validatedData['longitude'],
             'latitude' => $validatedData['latitude'],
@@ -194,6 +178,7 @@ class HospitalController extends Controller
             'status' => $validatedData['status'],
             'emergency' => $emergency,
             'nonemergency' => $nonemergency,
+            'contact' => $validatedData['contacts'][0] ?? null, // Primary contact
         ];
 
         if (!empty($validatedData['password'])) {
@@ -241,6 +226,7 @@ class HospitalController extends Controller
     {
         $hospitals = Hospital::onlyTrashed()
             ->with('contacts')
+            ->latest()
             ->get();
 
         return view('backend.hospital.trash', compact('hospitals'));

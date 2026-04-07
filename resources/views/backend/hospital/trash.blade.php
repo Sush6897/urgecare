@@ -35,10 +35,17 @@
                                 @foreach($hospitals as $hospital)
                                 <tr>
                                     <td>{{ $hospital->hospital_name }}</td>
-                                    <td>{{ $hospital->contact }}</td>
+                                    <td>
+                                        @foreach($hospital->contacts as $contact)
+                                            <div>{{ $contact->contact }}</div>
+                                        @endforeach
+                                        @if($hospital->contacts->isEmpty() && $hospital->contact)
+                                            <div>{{ $hospital->contact }}</div>
+                                        @endif
+                                    </td>
                                     <td>{{ $hospital->address }}</td>
                                     <td>{{ $hospital->city }}</td>
-                                    <td>{{ $hospital->deleted_at->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ $hospital->deleted_at->format('Y-m-d') }}</td>
                                     <td>
                                         <form action="{{ route('hospital.restore', $hospital->id) }}" method="POST" style="display:inline-block;">
                                             @csrf
@@ -55,31 +62,4 @@
     </div>
 
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        @if(Session::has('error'))
-        iziToast.error({
-            title: 'error',
-            message: '{{ Session::get("error") }}',
-            backgroundColor: '#f70400',
-            titleColor: 'white',
-            messageColor: 'white',
-            icon: 'mdi mdi-close',
-            iconColor: 'white',
-        });
-        @endif
-
-        @if(Session::has('success'))
-        iziToast.success({
-            title: 'Success',
-            message: '{{ Session::get("success") }}',
-            backgroundColor: '#40a7a3',
-            titleColor: 'white',
-            messageColor: 'white',
-            icon: 'mdi mdi-check',
-            iconColor: 'white',
-        });
-        @endif
-    });
-</script>
 @endsection

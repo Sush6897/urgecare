@@ -104,33 +104,4 @@
  
 
 </div>
-<script src="{{asset('/backend/assets/js/jquery-3.2.1.min.js')}}"></script>
-<script>
-  
-    document.addEventListener('DOMContentLoaded', function() {
-        @if(Session::has('error'))
-        iziToast.error({
-            title: 'error',
-            message: '{{ Session::get("error") }}',
-            backgroundColor: '#f70400', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-close', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-
-        @if(Session::has('success'))
-        iziToast.success({
-            title: 'Success',
-            message: '{{ Session::get("success") }}',
-            backgroundColor: '#40a7a3', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-check', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-    });
-</script>
 @endsection

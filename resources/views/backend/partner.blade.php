@@ -13,6 +13,45 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-body">
+                <form action="{{ route('partners.create') }}" method="GET">
+                    <div class="row filter-row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" name="name" class="form-control" value="{{ request('name') }}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Business Name</label>
+                                <input type="text" name="business_name" class="form-control" value="{{ request('business_name') }}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="text" name="email" class="form-control" value="{{ request('email') }}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <button type="submit" class="btn btn-primary btn-block"><i class="fe fe-search"></i> Search </button>
+                                    <a href="{{ route('partners.create') }}" class="btn btn-secondary btn-block">Reset</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-body">
                 <div class="table-responsive">
                     <table class="datatable table table-hover table-center mb-0">
                         <thead>
@@ -81,31 +120,4 @@
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        @if(Session::has('error'))
-        iziToast.error({
-            title: 'error',
-            message: '{{ Session::get("error") }}',
-            backgroundColor: '#f70400', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-close', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-
-        @if(Session::has('success'))
-        iziToast.success({
-            title: 'Success',
-            message: '{{ Session::get("success") }}',
-            backgroundColor: '#40a7a3', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-check', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-    });
-</script>
 @endsection

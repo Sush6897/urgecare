@@ -62,6 +62,35 @@
   <script src="{{asset('/backend/assets/js/script.js')}}"></script>
   <script src="{{asset('/backend/assets/js/izitoast.min.js')}}"></script>
   <script src="{{asset('/backend/assets/js/bootbox.min.js')}}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        @if(Session::has('error'))
+        iziToast.error({
+            title: 'Error',
+            message: '{{ Session::get("error") }}',
+            position: 'topRight',
+            backgroundColor: '#f70400',
+            titleColor: 'white',
+            messageColor: 'white',
+            icon: 'mdi mdi-close',
+            iconColor: 'white',
+        });
+        @endif
+
+        @if(Session::has('success'))
+        iziToast.success({
+            title: 'Success',
+            message: '{{ Session::get("success") }}',
+            position: 'topRight',
+            backgroundColor: '#40a7a3',
+            titleColor: 'white',
+            messageColor: 'white',
+            icon: 'mdi mdi-check',
+            iconColor: 'white',
+        });
+        @endif
+    });
+  </script>
 </body>
 
 

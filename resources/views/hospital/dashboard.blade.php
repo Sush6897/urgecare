@@ -16,62 +16,131 @@
     <!-- /Page Header -->
 
     <div class="row">
-        <div class="col-xl-4 col-sm-6 col-12">
+        <div class="col-xl-3 col-sm-6 col-12">
             <div class="card">
                 <div class="card-body">
                     <div class="dash-widget-header">
                         <span class="dash-widget-icon text-primary border-primary">
-                            <i class="mdi mdi-hospital"></i>
+                            <i class="fe fe-calendar"></i>
                         </span>
                         <div class="dash-count">
-                            <h3>{{auth('hospital')->user()->hospital_name}}</h3>
+                            <h3>{{ $currentMonthCount }}</h3>
                         </div>
                     </div>
                     <div class="dash-widget-info">
-                        <h6 class="text-muted">Name</h6>
+                        <h6 class="text-muted">Current Month</h6>
                         <div class="progress progress-sm">
-                            <div class="progress-bar bg-primary w-50"></div>
+                            <div class="progress-bar bg-primary w-100"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-4 col-sm-6 col-12">
+        <div class="col-xl-3 col-sm-6 col-12">
             <div class="card">
                 <div class="card-body">
                     <div class="dash-widget-header">
                         <span class="dash-widget-icon text-success">
-                            <i class="fe fe-mail"></i>
+                            <i class="fe fe-clock"></i>
                         </span>
                         <div class="dash-count">
-                            <h3 style="font-size: 1.2rem;">{{auth('hospital')->user()->email}}</h3>
+                            <h3>{{ $lastMonthCount }}</h3>
                         </div>
                     </div>
                     <div class="dash-widget-info">
-                        <h6 class="text-muted">Email</h6>
+                        <h6 class="text-muted">Last Month</h6>
                         <div class="progress progress-sm">
-                            <div class="progress-bar bg-success w-50"></div>
+                            <div class="progress-bar bg-success w-100"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-4 col-sm-6 col-12">
+        <div class="col-xl-3 col-sm-6 col-12">
             <div class="card">
                 <div class="card-body">
                     <div class="dash-widget-header">
                         <span class="dash-widget-icon text-warning border-warning">
-                            <i class="fe fe-phone"></i>
+                            <i class="fe fe-activity"></i>
                         </span>
                         <div class="dash-count">
-                            <h3>{{auth('hospital')->user()->contact}}</h3>
+                            <h3>{{ $thisYearCount }}</h3>
                         </div>
                     </div>
                     <div class="dash-widget-info">
-                        <h6 class="text-muted">Contact</h6>
+                        <h6 class="text-muted">This Year</h6>
                         <div class="progress progress-sm">
-                            <div class="progress-bar bg-warning w-50"></div>
+                            <div class="progress-bar bg-warning w-100"></div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-info border-info">
+                            <i class="fe fe-users"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ $totalCount }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Total Enquiries</h6>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-info w-100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Recent Enquiries</h4>
+                    <a href="{{ route('hospital.enquiry') }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Call ID</th>
+                                    <th>Patient Name</th>
+                                    <th>Patient Contact</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($latestEnquiries as $enq)
+                                <tr>
+                                    <td>{{ $enq->sid }}</td>
+                                    <td>{{ $enq->patient_name }}</td>
+                                    <td>{{ $enq->from }}</td>
+                                    <td>
+                                        @if($enq->status == 'success')
+                                            <span class="badge badge-success">Success</span>
+                                        @elseif($enq->status == 'notconnected')
+                                            <span class="badge badge-danger">Not Connected</span>
+                                        @else
+                                            <span class="badge badge-warning">Pending</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ \Carbon\Carbon::parse($enq->created_at)->format('d M Y, h:i A') }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">No recent enquiries found.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -81,33 +150,4 @@
  
 
 </div>
-<script src="{{asset('/backend/assets/js/jquery-3.2.1.min.js')}}"></script>
-<script>
-  
-    document.addEventListener('DOMContentLoaded', function() {
-        @if(Session::has('error'))
-        iziToast.error({
-            title: 'error',
-            message: '{{ Session::get("error") }}',
-            backgroundColor: '#f70400', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-close', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-
-        @if(Session::has('success'))
-        iziToast.success({
-            title: 'Success',
-            message: '{{ Session::get("success") }}',
-            backgroundColor: '#40a7a3', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-check', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-    });
-</script>
 @endsection

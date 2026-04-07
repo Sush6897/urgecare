@@ -11,6 +11,7 @@ use App\Http\Controllers\HospitalAuthController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ZohoController;
+use App\Http\Controllers\UserVisitController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,7 +64,7 @@ Route::resource('hospital', HospitalController::class)->middleware('auth');
 Route::resource('setting', SettingController::class)->only(['index', 'create', 'store'])->middleware('auth');
 Route::get('/hospitals/trash', [HospitalController::class, 'trash'])->middleware('auth')->name('hospital.trash');
 Route::post('/hospitals/restore/{id}', [HospitalController::class, 'restore'])->middleware('auth')->name('hospital.restore');
-Route::get('/fetch-coordinates', [HospitalController::class, 'fetchCoordinates']);
+Route::get('/fetch-coordinates', [HospitalController::class, 'fetchCoordinates'])->name('fetchCoordinates');
 Route::get('/contact-us', [FrontendController::class, 'contactus']);
 Route::post('/partners', [PartnerController::class, 'store'])->name('partners.store');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
@@ -79,8 +80,9 @@ Route::delete('/partner/delete/{id}',[PartnerController::class,'destroy'])->midd
 Route::get('/nearby-ambulance', [FrontendController::class, 'post'])->name('longitude');
 
 Route::post('/call', [FrontendController::class, 'call'])->name('call');
-Route::post('/exotel/call-status', [FrontendController::class, 'handleCallStatus']);
+Route::post('/exotel/call-status', [FrontendController::class, 'handleCallStatus'])->name('exotel.callback');
 Route::get('/enquiry',[EnquiryController::class, 'index'])->middleware('auth')->name('enquiry.index');
+Route::resource('user-visits', UserVisitController::class)->only(['index', 'destroy'])->middleware('auth');
 
 Route::post('/partners/{id}/status', [PartnerController::class, 'updateStatus'])->middleware('auth')->name('partners.status');
 

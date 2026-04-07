@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Hospital;
+use App\Models\UserVisit;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -83,6 +84,21 @@ class FrontendController extends Controller
     session()->put('latitude', $latitude);
     session()->put('longitude', $longitude);
 
+    // Fetch and store visitor details
+    $apiKey = 'AIzaSyDDoU-OX0rL-p06QWqGtHq-GdorZ-M-aoY';
+    $locationData = $this->googleApi($latitude, $longitude, $apiKey);
+    
+    UserVisit::create([
+        'ip_address' => $request->ip(),
+        'latitude' => $latitude,
+        'longitude' => $longitude,
+        'city' => $locationData['city'] ?? null,
+        'state' => $locationData['state'] ?? null,
+        'pincode' => $locationData['pincode'] ?? null,
+        'area' => $locationData['area'] ?? null,
+        'user_agent' => $request->userAgent(),
+    ]);
+
     // Redirect to the desired route or back to the previous page
     return redirect()->route('longitude');
   }
@@ -107,7 +123,7 @@ public function post(Request $request)
     $limit = 3;
 
     // Step 1: Discover nearby hospitals using Google Places API (1 call only)
-    $radius = $request->input('distance', 10) * 1000;
+    $radius = $request->input('distance', 3) * 1000;
     $cacheKey = "google_nearby_hybrid_{$latitude}_{$longitude}_{$radius}";
     
     $googleResults = Cache::remember($cacheKey, 3600, function () use ($latitude, $longitude, $radius, $apiKey) {
@@ -334,17 +350,25 @@ private function googleApi($latitude, $longitude, $apiKey)
     $data = $response->json();
 
     $city = null;
+    $state = null;
     $pincode = null;
+    $area = null;
     foreach ($data['results'][0]['address_components'] ?? [] as $component) {
         if (in_array('locality', $component['types'])) {
             $city = $component['long_name'];
         }
+        if (in_array('administrative_area_level_1', $component['types'])) {
+            $state = $component['long_name'];
+        }
         if (in_array('postal_code', $component['types'])) {
             $pincode = $component['long_name'];
         }
+        if (in_array('sublocality', $component['types']) || in_array('neighborhood', $component['types'])) {
+            $area = $component['long_name'];
+        }
     }
 
-    return compact('city', 'pincode');
+    return compact('city', 'state', 'pincode', 'area');
 }
 
   public function aboutus()
@@ -371,121 +395,45 @@ private function googleApi($latitude, $longitude, $apiKey)
     return view('frontend.privacy');
   }
 
-  // public function call(Request $request)
-  // {
-
-  //   $request->validate([
-  //     'hospital_id' => "required",
-  //     'patient_name' => 'required|string|max:255',
-  //     'contact' => 'required|digits_between:10,15| numeric'
-  //   ]);
-  //   $hospital = Hospital::where('id', $request->hospital_id)->first();
-  //   $api_key = '9ecda612ebfeb89f36a712e6c39b769075e739004bb18092';
-  //   $api_token = '3a2d575d67a561f0ffe8aa5e62e5f9aecf8117adb5009a7e';
-  //   $account_sid = 'uc1641'; // Exotel Account SID
-
-
-  //   // User's phone number from the request
-
-
-  //   try {
-  //     $response = $this->client->post("$account_sid/Calls/connect.json", [
-  //       'auth' => [$api_key, $api_token],
-  //       'form_params' => [
-  //         'From' => $request->contact,           // User's phone number $hospital->contact
-  //         'To' => $hospital->contact,
-  //         'CallerId' => '02048556108',
-  //          'Record'=> 'true',
-  //         'RecordingChannels'=>'single',
-  //         'RecordingFormat'=>'mp3',
-  //         'StatusCallback'=> 'https://nearestambulance.com',
-
-
-  //       ],
-  //     ]);
-
-  //     $data = json_decode($response->getBody(), true);
-
-  //     if (isset($data['Call'])) {
-
-  //       $sid = $data['Call']['Sid'] ?? null;
-  //       $from = $data['Call']['From'] ?? null;
-  //       $to = $data['Call']['To'] ?? null;
-
-  //       DB::table('enquiries')->insert([
-  //         'patient_name' => $request->patient_name,
-  //         'hospital_id' => $hospital->id,
-  //         'sid' => $sid,
-  //         'from' => $from,
-  //         'to' => $to,
-  //         'status' => 'pending',
-  //         'created_at' => now(),
-  //         'updated_at' => now(),
-  //       ]);
-       
-  //     } else {
-  //       return back()->with('error', 'Failed to initiate call.');
-  //     }
-      
-  //     $response1 = $this->client->post("$account_sid/Sms/send.json", [
-  //       'auth' => [$api_key, $api_token],
-  //       'form_params' => [
-  //         'From' => "URGKER",           // User's phone number
-  //         'To' =>  $hospital->contact,
-  //         'Body' => 'You just spoke with '.$request->contact.' for ambulance help. For more assistance call Team -Urgecare',
-  //         'DltTemplateId'=>'1707168475359519031',
-  //         'SmsType'=>'promotional',
-  //         'Priority'=>'high',
-  //       ],
-  //     ]);
-
-  //     $data1 = json_decode($response1->getBody(), true);
-  //     return back()->with('success', 'Call initiated successfully!');
-  //   } catch (RequestException $e) {
-  //     $response = $e->getResponse();
-  //     $responseBodyAsString = $response ? $response->getBody()->getContents() : $e->getMessage();
-  //     return back()->with('error',  'Error: ' . $responseBodyAsString);
-  //   }
-  // }
-   public function call(Request $request)
+  public function call(Request $request)
   {
+
     $request->validate([
       'hospital_id' => "required",
       'patient_name' => 'required|string|max:255',
-      'contact' => 'required|digits_between:10,15|numeric'
+      'contact' => 'required|digits_between:10,15| numeric'
     ]);
-
-    $hospital = Hospital::with('contacts')->findOrFail($request->hospital_id);
-    
-    // Get all contact numbers and join them with commas for sequential calling
-    $hospitalContacts = $hospital->contacts->pluck('contact')->filter()->toArray();
-    $toContacts = implode(',', $hospitalContacts);
-
-    if (empty($toContacts)) {
-        return back()->with('error', 'Hospital has no contact numbers configured.');
-    }
-
+    $hospital = Hospital::with('contacts')->where('id', $request->hospital_id)->first();
+    // dd($hospital);
     $api_key = '9ecda612ebfeb89f36a712e6c39b769075e739004bb18092';
     $api_token = '3a2d575d67a561f0ffe8aa5e62e5f9aecf8117adb5009a7e';
     $account_sid = 'uc1641'; // Exotel Account SID
-
     try {
+      $contacts = $hospital->contacts->pluck('contact')->toArray();
+      
+      // Use both individual contact field and extra contacts
+      $allContacts = array_unique(array_filter(array_merge([$hospital->contact], $contacts)));
+      $toString = implode(',', $allContacts);
+
+      $formParams = [
+        'From' => $request->contact,
+        'To' => $toString,
+        'CallerId' => '02048556108',
+        'Record'=> 'true',
+        'RecordingChannels'=>'single',
+        'RecordingFormat'=>'mp3',
+        'StatusCallback' => route('exotel.callback'),
+      ];
+
       $response = $this->client->post("$account_sid/Calls/connect.json", [
         'auth' => [$api_key, $api_token],
-        'form_params' => [
-          'From' => $request->contact,           // User's phone number
-          'To' => $toContacts,                   // Sequential hospital numbers "Num1,Num2..."
-          'CallerId' => '02048556108',
-          'Record'=> 'true',
-          'RecordingChannels'=>'single',
-          'RecordingFormat'=>'mp3',
-          'StatusCallback'=> url('/exotel/call-status'),
-        ],
+        'form_params' => $formParams,
       ]);
 
       $data = json_decode($response->getBody(), true);
 
       if (isset($data['Call'])) {
+
         $sid = $data['Call']['Sid'] ?? null;
         $from = $data['Call']['From'] ?? null;
         $to = $data['Call']['To'] ?? null;
@@ -500,6 +448,7 @@ private function googleApi($latitude, $longitude, $apiKey)
           'created_at' => now(),
           'updated_at' => now(),
         ]);
+       
       } else {
         return back()->with('error', 'Failed to initiate call.');
       }
@@ -515,11 +464,11 @@ private function googleApi($latitude, $longitude, $apiKey)
   public function handleCallStatus(Request $request)
   {
       // Log the callback for debugging
-      Log::info('Exotel Call Status Callback:', $request->all());
+      Log::channel('sms')->info('Exotel Call Status Callback:', $request->all());
 
       $callStatus = $request->input('Status'); 
       $patientContact = $request->input('From');
-      $answeredBy = $request->input('To'); // The number that actually received/answered the call
+      $answeredBy = $request->input('DialWhomNumber') ?? $request->input('To'); // The number that actually received/answered the call
       
       // Exotel status 'completed' indicates the call was successful and finished
       if ($callStatus === 'completed' && !empty($answeredBy)) {
@@ -529,20 +478,73 @@ private function googleApi($latitude, $longitude, $apiKey)
           $account_sid = 'uc1641';
 
           try {
+              $callSid = $request->input('CallSid');
+              $enquiry = DB::table('enquiries')->where('sid', $callSid)->first();
+              
+              if (!$enquiry) {
+                  Log::channel('sms')->warning("No enquiry found for CallSid: $callSid");
+                  return response()->json(['status' => 'enquiry_not_found']);
+              }
+
+              $patientName = $enquiry->patient_name;
+              $patientContact = $enquiry->from;
+              $hospital = Hospital::find($enquiry->hospital_id);
+              $hospitalName = $hospital ? $hospital->hospital_name : 'Hospital';
+              $helpline = '8149801662';
+
+              $cleanAnsweredBy = ltrim($answeredBy, '0');
+              if (strlen($cleanAnsweredBy) === 10) {
+                  $cleanAnsweredBy = '91' . $cleanAnsweredBy;
+              }
+              
+              // Only send SMS if it was answered by a valid number
               $this->client->post("$account_sid/Sms/send.json", [
                   'auth' => [$api_key, $api_token],
                   'form_params' => [
                       'From' => "URGKER",
-                      'To' =>  $answeredBy,
-                      'Body' => 'You just spoke with '.$patientContact.' for ambulance help. For more assistance call Team -Urgecare',
-                      'DltTemplateId'=>'1707168475359519031',
-                      'SmsType'=>'promotional',
-                      'Priority'=>'high',
+                      'To' =>  $cleanAnsweredBy,
+                      'Body' => "You just spoke with {$patientName} {$patientContact} for {$hospitalName} ambulance help. For more assistance call Team Urge Care {$helpline}",
+                      'DltTemplateId' => '1707177364516989149',
+                      'DltEntityId' => '1701164398108412688', 
+                      'SmsType' => 'PROMOTIONAL',
                   ],
               ]);
-              Log::info("SMS sent successfully to answered contact: $answeredBy");
+              Log::channel('sms')->info("Failover SMS sent successfully to responder: $answeredBy");
           } catch (\Exception $e) {
-              Log::error("Failed to send callback SMS: " . $e->getMessage());
+              Log::channel('sms')->error("Exotel Callback Error: " . $e->getMessage());
+          }
+      } else {
+          // MISSES CALL FALLBACK
+          try {
+              $callSid = $request->input('CallSid');
+              $enquiry = DB::table('enquiries')->where('sid', $callSid)->first();
+              
+              if ($enquiry) {
+                  $api_key = '9ecda612ebfeb89f36a712e6c39b769075e739004bb18092';
+                  $api_token = '3a2d575d67a561f0ffe8aa5e62e5f9aecf8117adb5009a7e';
+                  $account_sid = 'uc1641';
+                  
+                  $patientName = $enquiry->patient_name;
+                  $patientContact = $enquiry->from;
+                  $hospital = Hospital::find($enquiry->hospital_id);
+                  $hospitalName = $hospital ? $hospital->hospital_name : 'Hospital';
+                  
+                  // Send Missed Call SMS to Fallback Number 7888021021 (Same body as answered call)
+                  $this->client->post("$account_sid/Sms/send.json", [
+                      'auth' => [$api_key, $api_token],
+                      'form_params' => [
+                          'From' => "URGKER",
+                          'To' =>  '917888021021',
+                          'Body' => "You just spoke with {$patientName} {$patientContact} for {$hospitalName} ambulance help. For more assistance call Team Urge Care 8149801662",
+                          'DltTemplateId' => '1707177364516989149',
+                          'DltEntityId' => '1701164398108412688', 
+                          'SmsType' => 'PROMOTIONAL',
+                      ],
+                  ]);
+                  Log::channel('sms')->info("Missed Call Alert sent to 7888021021 for CallSid: $callSid");
+              }
+          } catch (\Exception $e) {
+              Log::channel('sms')->error("Exotel Missed Call Error: " . $e->getMessage());
           }
       }
 

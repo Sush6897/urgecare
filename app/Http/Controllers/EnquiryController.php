@@ -3,17 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Enquiry;
+use App\Models\Hospital;
 use Illuminate\Http\Request;
 
 class EnquiryController extends Controller
 {
     //
 
-    public function index(){
+    public function index(Request $request){
+        $query = Enquiry::with('hospital');
 
-        $enquiry=Enquiry::with('hospital')->get();
+        if ($request->filled('patient_name')) {
+            $query->where('patient_name', 'LIKE', '%' . $request->patient_name . '%');
+        }
+
+        if ($request->filled('hospital_id')) {
+            $query->where('hospital_id', $request->hospital_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $enquiry = $query->latest()->get();
+        $hospitals = Hospital::all();
        
-        return view('backend.enquiry.index', compact('enquiry'));
+        return view('backend.enquiry.index', compact('enquiry', 'hospitals'));
     }
 
     public function status(Request $request, $id){

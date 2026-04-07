@@ -20,6 +20,55 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-body">
+                <form action="{{ route('hospital.index') }}" method="GET">
+                    <div class="row filter-row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>Hospital Name</label>
+                                <input type="text" name="hospital_name" class="form-control" value="{{ request('hospital_name') }}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <div class="form-group">
+                                <label>City</label>
+                                <input type="text" name="city" class="form-control" value="{{ request('city') }}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <div class="form-group">
+                                <label>Area</label>
+                                <input type="text" name="area" class="form-control" value="{{ request('area') }}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-2">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="">--All Status--</option>
+                                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <button type="submit" class="btn btn-primary btn-block"><i class="fe fe-search"></i> Search </button>
+                                    <a href="{{ route('hospital.index') }}" class="btn btn-secondary btn-block">Reset</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-body">
                 <div class="table-responsive">
                     <table class="datatable table table-hover table-center mb-0">
                         <thead>
@@ -28,8 +77,7 @@
                                     <th>Contact</th>
                                     <th>Address</th>
                                     <th>City</th>
-                                    <th>State</th>
-                                    <th>Country</th>
+                                    <th>Type</th>
                                     <th>Area</th>
                                     <th>Status</th>
                                     <th>Created</th>
@@ -41,18 +89,31 @@
                             @foreach($hospitals as $hospital)
                                 <tr>
                                     <td>{{ $hospital->hospital_name }}</td>
-                                    <td>{{ $hospital->contact }}</td>
+                                    <td>
+                                        @foreach($hospital->contacts as $contact)
+                                            <div>{{ $contact->contact }}</div>
+                                        @endforeach
+                                        @if($hospital->contacts->isEmpty() && $hospital->contact)
+                                            <div>{{ $hospital->contact }}</div>
+                                        @endif
+                                    </td>
                                     <td>{{ $hospital->address }}</td>
                                     <td>{{ $hospital->city }}</td>
-                                    <td>{{ $hospital->state }}</td>
-                                    <td>{{ $hospital->country }}</td>
+                                    <td>
+                                        @if($hospital->emergency)
+                                            <span class="badge badge-danger">Emergency</span>
+                                        @endif
+                                        @if($hospital->nonemergency)
+                                            <span class="badge badge-info">Non-Emergency</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $hospital->area}}</td>
                                     <td>
                                         <span class="badge {{ $hospital->status == 'active' ? 'badge-success' : 'badge-danger' }}">
                                             {{ ucfirst($hospital->status) }}
                                         </span>
                                     </td>
-                                    <td>{{ \Carbon\Carbon::parse($hospital->created_at)->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($hospital->created_at)->format('Y-m-d') }}</td>
                                     <td>
                                         <a href="{{ route('hospital.edit', $hospital->id) }}" class="btn btn-sm btn-primary"><i class="fe fe-pencil"></i></a>
                                         <form action="{{ route('hospital.destroy', $hospital->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this hospital?');">
@@ -70,31 +131,4 @@
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        @if(Session::has('error'))
-        iziToast.error({
-            title: 'error',
-            message: '{{ Session::get("error") }}',
-            backgroundColor: '#f70400', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-close', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-
-        @if(Session::has('success'))
-        iziToast.success({
-            title: 'Success',
-            message: '{{ Session::get("success") }}',
-            backgroundColor: '#40a7a3', // Set the background color to black
-            titleColor: 'white', // Set the title color to white for better visibility
-            messageColor: 'white', // Set the message color to white for better visibility
-            icon: 'mdi mdi-check', // MDI information icon
-            iconColor: 'white',
-        });
-        @endif
-    });
-</script>
 @endsection

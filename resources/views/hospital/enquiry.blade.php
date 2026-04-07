@@ -35,6 +35,45 @@
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-body">
+                    <form action="{{ route('hospital.enquiry') }}" method="GET">
+                        <div class="row filter-row">
+                            <div class="col-sm-6 col-md-4">
+                                <div class="form-group">
+                                    <label>Patient Name</label>
+                                    <input type="text" name="patient_name" class="form-control" value="{{ request('patient_name') }}">
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select name="status" class="form-control">
+                                        <option value="">--All Status--</option>
+                                        <option value="success" {{ request('status') == 'success' ? 'selected' : '' }}>Success</option>
+                                        <option value="notconnected" {{ request('status') == 'notconnected' ? 'selected' : '' }}>Notconnected</option>
+                                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <div>
+                                        <button type="submit" class="btn btn-primary"><i class="fe fe-search"></i> Search </button>
+                                        <a href="{{ route('hospital.enquiry') }}" class="btn btn-secondary">Reset</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-body">
                     <div class="table-responsive">
                         <table class="datatable table table-hover table-center mb-0">
                             <thead>

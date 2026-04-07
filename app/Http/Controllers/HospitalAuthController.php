@@ -12,7 +12,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Rules\AtLeastThreeFeatures;
 
-
 class HospitalAuthController extends Controller
 {
     public function showLoginForm()
@@ -46,17 +45,57 @@ class HospitalAuthController extends Controller
 
     public function dashboard()
     {
-        // Add specific data for hospital dashboard if needed
-        return view('hospital.dashboard');
+        $hospitalId = auth('hospital')->id();
+        
+        // Current Month
+        $currentMonthCount = Enquiry::where('hospital_id', $hospitalId)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        // Last Month
+        $lastMonthCount = Enquiry::where('hospital_id', $hospitalId)
+            ->whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
+
+        // This Year
+        $thisYearCount = Enquiry::where('hospital_id', $hospitalId)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        // Total
+        $totalCount = Enquiry::where('hospital_id', $hospitalId)->count();
+
+        // Latest 5 Enquiries
+        $latestEnquiries = Enquiry::where('hospital_id', $hospitalId)
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('hospital.dashboard', compact(
+            'currentMonthCount', 
+            'lastMonthCount', 
+            'thisYearCount', 
+            'totalCount',
+            'latestEnquiries'
+        ));
     }
 
-    public function enquiry()
+    public function enquiry(Request $request)
     {
         $hospitalId = auth('hospital')->id();
-        $enquiry = Enquiry::with('hospital')
-                    ->where('hospital_id', $hospitalId)
-                    ->latest()
-                    ->get();
+        $query = Enquiry::with('hospital')->where('hospital_id', $hospitalId);
+
+        if ($request->filled('patient_name')) {
+            $query->where('patient_name', 'LIKE', '%' . $request->patient_name . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $enquiry = $query->latest()->get();
         return view('hospital.enquiry', compact('enquiry'));
     }
 
@@ -84,7 +123,7 @@ class HospitalAuthController extends Controller
             'longitude'     => 'required|string|max:255',
             'latitude'      => 'required|string|max:255',
             'contacts'      => 'required|array|min:1',
-            'contacts.*'    => 'required|string|max:20',
+            'contacts.*'    => 'required|digits:10',
             'features.features1' => ['nullable', 'string', 'max:255'],
             'features.features2' => ['nullable', 'string', 'max:255'],
             'features.features3' => ['nullable', 'string', 'max:255'],
@@ -94,6 +133,7 @@ class HospitalAuthController extends Controller
             'type.*' => 'in:emergency,non-emergency',
         ], [
             'features' => 'At least three features are required.',
+            'contacts' => 'At least one contact is required.',
         ]);
 
         $emergency = in_array('emergency', $request->type) ? 1 : 0;
@@ -117,6 +157,7 @@ class HospitalAuthController extends Controller
             'features4'     => $request->features['features4'] ?? null,
             'emergency'     => $emergency,
             'nonemergency'  => $nonemergency,
+            'contact'       => $request->contacts[0] ?? null, // Sync primary contact
         ]);
 
         // Update contacts

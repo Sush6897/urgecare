@@ -24,8 +24,18 @@ class ContactController extends Controller
         return back()->with('success', 'Your message has been sent successfully!');
     }
 
-    public function index(){
-        $Contact =Contact::all();
+    public function index(Request $request){
+        $query = Contact::query();
+
+        if ($request->filled('name')) {
+            $query->where('name', 'LIKE', '%' . $request->name . '%');
+        }
+
+        if ($request->filled('email')) {
+            $query->where('email', 'LIKE', '%' . $request->email . '%');
+        }
+
+        $Contact = $query->latest()->get();
         return view('backend.contact',compact('Contact'));
     }
 
