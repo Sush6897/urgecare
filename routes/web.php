@@ -5,6 +5,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EnquiryController;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\ExotelController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\HospitalAuthController;
@@ -80,7 +81,12 @@ Route::delete('/partner/delete/{id}',[PartnerController::class,'destroy'])->midd
 Route::get('/nearby-ambulance', [FrontendController::class, 'post'])->name('longitude');
 
 Route::post('/call', [FrontendController::class, 'call'])->name('call');
-Route::post('/exotel/call-status', [FrontendController::class, 'handleCallStatus'])->name('exotel.callback');
+Route::post('/exotel/initiate', [ExotelController::class, 'initiateCall'])->name('exotel.initiate');
+Route::post('/exotel/callback', [ExotelController::class, 'handleCallback'])
+    ->name('exotel.callback');
+// Route::post('/exotel/flow', [FrontendController::class, 'exotelFlow'])->name('exotel.flow');
+// Route::get('/exotel/dial-status', [FrontendController::class, 'dialStatus'])->name('dial.status');
+// Route::post('/exotel/call-status', [FrontendController::class, 'handleCallStatus'])->name('exotel.callback');
 Route::get('/enquiry',[EnquiryController::class, 'index'])->middleware('auth')->name('enquiry.index');
 Route::resource('user-visits', UserVisitController::class)->only(['index', 'destroy'])->middleware('auth');
 

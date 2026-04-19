@@ -31,4 +31,14 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'exotel' => [
+        'account_sid' => env('EXOTEL_ACCOUNT_SID'),
+        'api_key' => env('EXOTEL_API_KEY'),
+        'api_token' => env('EXOTEL_API_TOKEN'),
+        'caller_id' => env('EXOTEL_CALLER_ID'),
+        // Required for leg-level Status + Legs[] in callbacks (see Exotel StatusCallback docs).
+        'status_callback_events' => env('EXOTEL_STATUS_CALLBACK_EVENTS', 'terminal'),
+        'status_callback_content_type' => env('EXOTEL_STATUS_CALLBACK_CONTENT_TYPE', 'application/json'),
+    ],
+
 ];

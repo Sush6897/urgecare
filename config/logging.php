@@ -123,6 +123,12 @@ return [
             'path' => storage_path('logs/sms.log'),
             'level' => 'info',
         ],
+
+        'exotel' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/exotel.log'),
+            'level' => env('LOG_EXOTEL_LEVEL', env('LOG_LEVEL', 'debug')),
+        ],
     ],
 
 ];
