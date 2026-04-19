@@ -123,7 +123,7 @@ public function post(Request $request)
     $limit = 3;
 
     // Step 1: Discover nearby hospitals using Google Places API (1 call only)
-    $radius = $request->input('distance', 3) * 1000;
+    $radius = $request->input('distance', 1) * 1000;
     $cacheKey = "google_nearby_hybrid_{$latitude}_{$longitude}_{$radius}";
     
     $googleResults = Cache::remember($cacheKey, 3600, function () use ($latitude, $longitude, $radius, $apiKey) {

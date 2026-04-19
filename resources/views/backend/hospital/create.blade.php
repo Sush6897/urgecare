@@ -58,7 +58,7 @@
                             <div class="row contact-row mb-2">
 
                                 <div class="col-md-10">
-                                    <input type="text" name="contacts[]" class="form-control contact-input" maxlength="10" pattern="\d{10}" title="Please enter a 10-digit phone number" required placeholder="Enter Contact Number">
+                                    <input type="text" name="contacts[]" class="form-control contact-input" maxlength="10" pattern="[0-9]{10}" title="Please enter a 10-digit phone number" required placeholder="Enter Contact Number">
                                 </div>
 
                                 <div class="col-md-2">
@@ -237,7 +237,7 @@ $('#add-contact').click(function(){
         <div class="row contact-row mb-2">
 
             <div class="col-md-10">
-                <input type="text" name="contacts[]" class="form-control contact-input" maxlength="10" pattern="\d{10}" title="Please enter a 10-digit phone number" required placeholder="Enter Contact Number">
+                <input type="text" name="contacts[]" class="form-control contact-input" maxlength="10" pattern="[0-9]{10}" title="Please enter a 10-digit phone number" required placeholder="Enter Contact Number">
             </div>
 
             <div class="col-md-2">
