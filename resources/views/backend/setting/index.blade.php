@@ -44,6 +44,38 @@
                                     <th>Non-Emergency Number</th>
                                     <td>{{ $setting->non_emergency_number ?? 'N/A' }}</td>
                                 </tr>
+                                <tr>
+                                    <th>WhatsApp Number</th>
+                                    <td>{{ $setting->whatsapp_number ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Secondary Call Number</th>
+                                    <td>{{ $setting->secondary_call_number ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Emergency Link</th>
+                                    <td>
+                                        <span class="badge {{ $setting->is_emergency_link ? 'badge-success' : 'badge-danger' }}">
+                                            {{ $setting->is_emergency_link ? 'Enabled' : 'Disabled' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Call Icon</th>
+                                    <td>
+                                        <span class="badge {{ $setting->is_call_icon ? 'badge-success' : 'badge-danger' }}">
+                                            {{ $setting->is_call_icon ? 'Enabled' : 'Disabled' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>WhatsApp Icon</th>
+                                    <td>
+                                        <span class="badge {{ $setting->is_whatsapp_icon ? 'badge-success' : 'badge-danger' }}">
+                                            {{ $setting->is_whatsapp_icon ? 'Enabled' : 'Disabled' }}
+                                        </span>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

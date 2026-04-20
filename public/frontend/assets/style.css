@@ -604,3 +604,75 @@ header a{
     margin-bottom: 20px;
   }
 }
+
+/* Floating Icons Styles */
+.floating-icons-container {
+    position: fixed;
+    bottom: 20px; 
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 1000;
+}
+
+.floating-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    color: white;
+    font-size: 30px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid #fff;
+}
+
+.floating-icon:hover {
+    transform: scale(1.1);
+    color: white;
+    text-decoration: none;
+}
+
+.floating-icon.whatsapp {
+    background-color: #25d366;
+    animation: whatsapp-glow 1s infinite alternate;
+}
+
+.floating-icon.call {
+    background-color: #000000;
+    animation: call-glow 1s infinite alternate;
+}
+
+@keyframes call-glow {
+    from { box-shadow: 0 0 5px -5px red; }
+    to { box-shadow: 0 0 5px 13px red; }
+}
+
+@keyframes whatsapp-glow {
+    from { box-shadow: 0 0 5px -5px #25d366; }
+    to { box-shadow: 0 0 5px 13px #25d366; }
+}
+
+.floating-icon i.fa-spin-slow {
+    animation: fa-spin 2s infinite linear;
+}
+
+@media (max-width: 767.98px) {
+    .floating-icons-container {
+        bottom: 80px; /* Adjust for mobile sticky footer */
+    }
+    .floating-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 26px;
+    }
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(359deg); }
+}

@@ -90,18 +90,5 @@
         </div>
     </div>
 </section>
-<section class="app-download bg-light py-3">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <h2 class="sec-title">For Quick & Reliable service Download our Urgecare App</h2>
-            </div>
-            <div class="col-md-6 app-buttons">
-                <a href="https://play.google.com/store/apps" target="_blank">
-                    <img src="{{asset('/frontend/assets/images/apps.png')}}" alt="Download on Google Play" height="100" class="img-fluid">
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
+
 @endsection

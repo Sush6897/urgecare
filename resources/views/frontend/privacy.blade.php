@@ -91,8 +91,8 @@
             <p>If you have any questions or concerns about our Privacy Policy, or if you would like to exercise any of
                 your rights regarding your personal information, please contact us using the following contact
                 information:</p>
-            <p>Email: urgecarecommunications@gmail.com<br>
-                Phone: +91 7888021021</p>
+            <p>Email: {{ $setting->email ?? 'urgecarecommunications@gmail.com' }}<br>
+                Phone: {{ $setting->contact_number ?? '+91 7888021021' }}</p>
             <p>Our dedicated privacy team will assist you with any inquiries or requests you may have, and we will
                 strive to address your concerns promptly and effectively.</p>
         </div>
