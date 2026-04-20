@@ -25,8 +25,8 @@ use App\Http\Controllers\UserVisitController;
 |
 */
 
-Route::get('/', [FrontendController::class, 'landing'])->name('landing');
-Route::get('/home', [FrontendController::class, 'index'])->name('home');
+Route::get('/', [FrontendController::class, 'index'])->name('home');
+Route::get('/landing', [FrontendController::class, 'landing'])->name('landing');
 Route::post('/load-more', [FrontendController::class, 'loadMore'])->name('load.more');
 
 Route::get('/about-us',[FrontendController::class,'aboutus']);

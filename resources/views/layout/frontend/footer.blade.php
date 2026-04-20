@@ -9,6 +9,7 @@
         <li><a href="{{url('urgecare-services')}}">Urgecare Services</a></li>
 
         <li><a href="{{url('/contact-us')}}">Contact Us</a></li>
+        <li><a href="{{ route('landing') }}">Login</a></li>
       </ul>
       
       <ul class="footer-links">
