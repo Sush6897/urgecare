@@ -125,7 +125,7 @@ public function post(Request $request)
         ]);
         return $response->json()['results'] ?? [];
     });
-    dd($googleResults);
+    // dd($googleResults);
 
     // Step 2: Use names from Google to query our indexed local database
     $hospitalNames = array_column($googleResults, 'name');
