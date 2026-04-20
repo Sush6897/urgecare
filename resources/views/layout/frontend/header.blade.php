@@ -70,7 +70,7 @@
                       </li>
                       
                       <li class="nav-item">
-                        <a class="btn btn-secondary" href="tel:+917888021021">
+                        <a class="btn btn-secondary" href="tel:{{ $setting->contact_number ?? '+917888021021' }}">
                           <i class="fa fa-phone-alt" aria-hidden="true"></i> Call Now
                         </a>
                       </li>
@@ -118,7 +118,7 @@
                       aria-hidden="true"></i>  {{session()->has('city') ? session()->get('city') :'Allow Location'}}</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link btn btn-secondary" href="tel:+917888021021"> <i class="fa fa-phone-alt" aria-hidden="true"></i>
+                  <a class="nav-link btn btn-secondary" href="tel:{{ $setting->contact_number ?? '+917888021021' }}"> <i class="fa fa-phone-alt" aria-hidden="true"></i>
                     Call Now</a>
                 </li>
               </div>

@@ -32,7 +32,7 @@
                         <i class="fa fa-phone-alt fa-2x mr-2"></i>
                         <div>
                             <h5 class="mb-0">Phone</h5>
-                            <p class="mb-0"><a href="tel:+917888021021" style="color:#fff;">+917888021021</a></p>
+                            <p class="mb-0"><a href="tel:{{ $setting->contact_number ?? '+917888021021' }}" style="color:#fff;">{{ $setting->contact_number ?? '+917888021021' }}</a></p>
                         </div>
                     </div>
                     <hr>
@@ -40,7 +40,7 @@
                         <i class="fa fa-envelope fa-2x mr-2"></i>
                         <div>
                             <h5 class="mb-0">Email</h5>
-                            <p class="mb-0"><a href="mailto:urgecarecommunications@gmail.com" style="color:#fff;">urgecarecommunications@gmail.com</a></p>
+                            <p class="mb-0"><a href="mailto:{{ $setting->email ?? 'urgecarecommunications@gmail.com' }}" style="color:#fff;">{{ $setting->email ?? 'urgecarecommunications@gmail.com' }}</a></p>
                         </div>
                     </div>
                     <hr>

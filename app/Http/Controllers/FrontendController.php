@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Log;
 
 class FrontendController extends Controller
 {
+  public function landing()
+  {
+    return view('frontend.landing');
+  }
+
   public function index(Request $request)
   {
     // session()->flush();

@@ -52,6 +52,8 @@
                 conditions, please contact us using the provided contact information. Your satisfaction and trust are
                 our utmost priorities, and we are committed to providing you with exceptional services while ensuring
                 the privacy and security of your information.</p>
+            <p><strong>Email:</strong> {{ $setting->email ?? 'urgecarecommunications@gmail.com' }}<br>
+               <strong>Phone:</strong> {{ $setting->contact_number ?? '+91 7888021021' }}</p>
         </div>
     </section>
 
