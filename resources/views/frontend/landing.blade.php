@@ -23,16 +23,19 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
             background: #000 url('{{ asset('assets/images/landing_bg.png') }}') no-repeat center center/cover;
+            background-attachment: fixed;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 40px 0;
         }
 
         .overlay {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -182,17 +185,47 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @media (max-width: 1200px) {
+            .options-grid {
+                gap: 20px;
+                padding: 0 10px;
+            }
+            .option-card {
+                padding: 40px 20px;
+            }
+        }
+
         @media (max-width: 992px) {
             .options-grid {
-                grid-template-columns: 1fr;
-                max-width: 400px;
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 800px;
                 margin: 0 auto;
             }
-            body {
-                overflow: auto;
-                padding: 50px 0;
+            .logo-text { font-size: 2.8rem; }
+        }
+
+        @media (max-width: 768px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+                max-width: 450px;
             }
-            .logo-text { font-size: 2.5rem; }
+            .header {
+                margin-bottom: 40px;
+            }
+            .logo-text { font-size: 2.2rem; }
+            .tagline { font-size: 1.1rem; }
+            .option-card {
+                padding: 30px 20px;
+            }
+            .icon-box {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 20px;
+            }
+            .icon-box svg {
+                width: 40px;
+                height: 40px;
+            }
         }
     </style>
 </head>
