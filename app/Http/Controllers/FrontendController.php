@@ -207,7 +207,7 @@ public function post(Request $request)
     
     $offset = (int) $request->input('offset', 0);
     $limit = 3;
-    $radius = (float) $request->input('distance', 1) * 1000;
+    $radius = (float) $request->input('distance', 2) * 1000;
 
     // Fetch nearby hospitals using Places API with pagetoken support (cached results)
     $allResults = $this->getCachedNearbyHospitals($latitude, $longitude, $radius, $apiKey);
