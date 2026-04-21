@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Client\Pool;
 
 class FrontendController extends Controller
 {
@@ -100,58 +101,140 @@ class FrontendController extends Controller
 
 
 
+// public function post(Request $request)
+// {
+//     set_time_limit(0);
+//     $apiKey = 'AIzaSyDDoU-OX0rL-p06QWqGtHq-GdorZ-M-aoY';
+
+//     $latitude = session('latitude');
+//     $longitude = session('longitude');
+
+//     if (!$latitude || !$longitude) {
+//         return redirect()->route('home')->with('error', 'Please enable location access.');
+//     }
+    
+//     $locationData = $this->getCachedLocationData($latitude, $longitude, $apiKey);
+//     $city = $locationData['city'] ?? '';
+//     session()->put('city', $city);
+    
+//     $offset = $request->input('offset', 0);
+//     $limit = 3;
+//     $radius = (float) $request->input('distance', 1); // Default 5km
+
+//     // Optimized Way: Direct Radial Search using Haversine Formula
+//     $hospitalQuery = Hospital::selectRaw("*, 
+//         ( 6371 * acos( cos( radians(?) ) *
+//           cos( radians( latitude ) )
+//           * cos( radians( longitude ) - radians(?)
+//           ) + sin( radians(?) ) *
+//           sin( radians( latitude ) ) )
+//         ) AS distance", [$latitude, $longitude, $latitude])
+//         ->where('status', 'active')
+//         ->where('emergency', 1);
+
+//     // Apply distance filter
+//     $hospitalQuery->having('distance', '<=', $radius);
+
+//     // Apply additional filters (Search bar)
+//     if ($search = $request->input('search')) {
+//         $hospitalQuery->where(function ($query) use ($search) {
+//             $query->where('hospital_name', 'LIKE', "%{$search}%")
+//                   ->orWhere('area', 'LIKE', "%{$search}%")
+//                   ->orWhere('pincode', 'LIKE', "%{$search}%");
+//         });
+//     }
+
+//     // Apply feature filters
+//     $selectedFeatures = $request->input('feature', []);
+//     if ($selectedFeatures) {
+//         $hospitalQuery->where(function ($query) use ($selectedFeatures) {
+//             foreach ($selectedFeatures as $feature) {
+//                 $query->orWhere('features1', $feature)
+//                       ->orWhere('features2', $feature)
+//                       ->orWhere('features3', $feature)
+//                       ->orWhere('features4', $feature);
+//             }
+//         });
+//     }
+
+//     $hospitalQuery->orderBy('distance');
+
+//     // Fetch all qualified hospitals and then handle pagination in-memory to avoid SQL binding errors with complex subqueries
+//     $allHospitals = $hospitalQuery->get();
+//     $totalCount = $allHospitals->count();
+//     $hospitals = $allHospitals->slice($offset, $limit);
+
+//     $features = $this->getCachedHospitalFeatures();
+
+//     if ($request->ajax()) {
+//         if ($hospitals->isEmpty()) {
+//             return response()->json(['html' => '', 'hasMore' => false]);
+//         }
+//         $html = view('frontend.partials.emergency_cards', ['hospital' => $hospitals])->render();
+//         $hasMore = ($offset + $limit) < $totalCount;
+//         return response()->json(['html' => $html, 'hasMore' => $hasMore]);
+//     }
+
+//     return view('frontend.emergency', [
+//         'hospital' => $hospitals,
+//         'features' => $features,
+//     ]);
+// }
+
+/*
+==========================================================================
+BACKUP: ORIGINAL SLOW IMPLEMENTATION (Multiple Google Geocoding calls)
+========================================================================== */
 public function post(Request $request)
 {
     set_time_limit(0);
     $apiKey = 'AIzaSyDDoU-OX0rL-p06QWqGtHq-GdorZ-M-aoY';
 
+    // Retrieve latitude and longitude from session
     $latitude = session('latitude');
     $longitude = session('longitude');
-    
+
+    if (!$latitude || !$longitude) {
+        return redirect()->route('home')->with('error', 'Please enable location access.');
+    }
+
+    // Fetch city and pincode using Geocoding API (Cached to reduce repetitive calls)
     $locationData = $this->getCachedLocationData($latitude, $longitude, $apiKey);
-    $city = $locationData['city'];
-    $pincode = $locationData['pincode'];
+    $city = $locationData['city'] ?? '';
+    $pincode = $locationData['pincode'] ?? '';
 
     session()->put('city', $city);
     
-    $offset = $request->input('offset', 0);
+    $offset = (int) $request->input('offset', 0);
     $limit = 3;
+    $radius = (float) $request->input('distance', 1) * 1000;
 
-    // Step 1: Discover nearby hospitals using Google Places API (1 call only)
-    $radius = $request->input('distance', 1) * 1000;
-    $cacheKey = "google_nearby_hybrid_{$latitude}_{$longitude}_{$radius}";
+    // Fetch nearby hospitals using Places API with pagetoken support (cached results)
+    $allResults = $this->getCachedNearbyHospitals($latitude, $longitude, $radius, $apiKey);
+
+    // Extract and map locations from the API response (Solves API N+1 Issue)
+    $locations = $this->mapHospitalLocations($allResults, $apiKey);
     
-    $googleResults = Cache::remember($cacheKey, 3600, function () use ($latitude, $longitude, $radius, $apiKey) {
-        $response = Http::get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', [
-            'location' => "{$latitude},{$longitude}",
-            'radius' => $radius,
-            'type' => 'hospital',
-            'key' => $apiKey,
-        ]);
-        return $response->json()['results'] ?? [];
-    });
-    // dd($googleResults);
+    // Build the query for hospitals with Eager Loading (Solves DB N+1 Issue)
+    $hospitalQuery = Hospital::with('contacts')->where('emergency', 1)
+                              ->where('status', 'active');
 
-    // Step 2: Use names from Google to query our indexed local database
-    $hospitalNames = array_column($googleResults, 'name');
-    
-    $hospitalQuery = Hospital::where('status', 'active')
-                              ->where('emergency', 1);
-
-    if (!empty($hospitalNames)) {
-        $hospitalQuery->where(function ($q) use ($hospitalNames) {
-            foreach ($hospitalNames as $name) {
-                $q->orWhere('hospital_name', 'LIKE', "%{$name}%");
-            }
-        });
-    }
-
-    // Step 3: Apply additional filters (Search bar, Sidebar Features)
     if ($search = $request->input('search')) {
         $hospitalQuery->where(function ($query) use ($search) {
             $query->where('hospital_name', 'LIKE', "%{$search}%")
                   ->orWhere('area', 'LIKE', "%{$search}%")
                   ->orWhere('pincode', 'LIKE', "%{$search}%");
+        });
+    }
+
+    if (!empty($locations)) {
+        $pincodes = array_column($locations, 'pincode');
+        $hospitalQuery->whereIn('pincode', $pincodes);
+    } else {
+        // Fallback: If Google finds nothing, filter by current city & pincode
+        $hospitalQuery->where(function ($q) use ($city, $pincode) {
+            $q->where('city', 'LIKE', "%{$city}%")
+              ->orWhere('pincode', 'LIKE', "%{$pincode}%");
         });
     }
 
@@ -167,19 +250,22 @@ public function post(Request $request)
         });
     }
 
-    // Clone for counting
-    $countQuery = clone $hospitalQuery;
+    // Get total count for pagination
+    $totalCount = $hospitalQuery->count();
 
+    // Get paginated results
     $hospitals = $hospitalQuery->offset($offset)->limit($limit)->get();
+
+    // Fetch unique features (Cached to reduce repetitive calls)
     $features = $this->getCachedHospitalFeatures();
 
+    // AJAX response for "Load More"
     if ($request->ajax()) {
         if ($hospitals->isEmpty()) {
             return response()->json(['html' => '', 'hasMore' => false]);
         }
         $html = view('frontend.partials.emergency_cards', ['hospital' => $hospitals])->render();
-        // Fixed: Added limit(1) because offset needs a limit in some MariaDB/MySQL versions
-        $hasMore = $countQuery->offset($offset + $limit)->limit(1)->exists();
+        $hasMore = ($offset + $limit) < $totalCount;
         return response()->json(['html' => $html, 'hasMore' => $hasMore]);
     }
 
@@ -188,74 +274,6 @@ public function post(Request $request)
         'features' => $features,
     ]);
 }
-
-/*
-==========================================================================
-BACKUP: ORIGINAL SLOW IMPLEMENTATION (Multiple Google Geocoding calls)
-========================================================================== */
-// public function post(Request $request)
-// {
-//     set_time_limit(0);
-//     $apiKey = 'AIzaSyDDoU-OX0rL-p06QWqGtHq-GdorZ-M-aoY';
-
-//     // Retrieve latitude and longitude from session
-//     $latitude = session('latitude');
-//     $longitude = session('longitude');
-
-//     // Fetch city and pincode using Geocoding API (Cached to reduce repetitive calls)
-//     $locationData = $this->getCachedLocationData($latitude, $longitude, $apiKey);
-//     $city = $locationData['city'];
-//     $pincode = $locationData['pincode'];
-
-//     session()->put('city', $city);
-
-//     $radius = $request->input('distance', 1) * 1000; // Default radius 2000 meters
-
-//     // Fetch nearby hospitals using Places API with pagetoken support (cached results)
-//     $allResults = $this->getCachedNearbyHospitals($latitude, $longitude, $radius, $apiKey);
-
-//     // Extract and map locations from the API response
-//     $locations = $this->mapHospitalLocations($allResults, $apiKey);
-//     dd($locations);
-//     // Build the query for hospitals
-//     $hospitalQuery = Hospital::where('emergency', 1)
-//                               ->where('status', 'active');
-
-//     if ($search = $request->input('search')) {
-//         $hospitalQuery->where(function ($query) use ($search) {
-//             $query->where('hospital_name', 'LIKE', "%{$search}%")
-//                   ->orWhere('area', 'LIKE', "%{$search}%")
-//                   ->orWhere('pincode', 'LIKE', "%{$search}%");
-//         });
-//     }
-
-//     if (!empty($locations)) {
-//         $pincodes = array_column($locations, 'pincode');
-//         $hospitalQuery->whereIn('pincode', $pincodes);
-//     }
-
-//     $selectedFeatures = $request->input('feature', []);
-//     if ($selectedFeatures) {
-//         $hospitalQuery->where(function ($query) use ($selectedFeatures) {
-//             foreach ($selectedFeatures as $feature) {
-//                 $query->orWhere('features1', $feature)
-//                       ->orWhere('features2', $feature)
-//                       ->orWhere('features3', $feature)
-//                       ->orWhere('features4', $feature);
-//             }
-//         });
-//     }
-
-//     $hospitals = $hospitalQuery->get();
-
-//     // Fetch unique features (Cached to reduce repetitive calls)
-//     $features = $this->getCachedHospitalFeatures();
-
-//     return view('frontend.emergency', [
-//         'hospital' => $hospitals,
-//         'features' => $features,
-//     ]);
-// }
 
 
 private function getCachedLocationData($latitude, $longitude, $apiKey)
@@ -302,22 +320,72 @@ private function getCachedNearbyHospitals($latitude, $longitude, $radius, $apiKe
 
 private function mapHospitalLocations(array $hospitals, $apiKey)
 {
-    return array_map(function ($hospital) use ($apiKey) {
+    // Step 1: Identify which locations are not already cached
+    $missingIndexes = [];
+    foreach ($hospitals as $index => $hospital) {
         $lat = $hospital['geometry']['location']['lat'];
         $lng = $hospital['geometry']['location']['lng'];
+        if (!Cache::has("hospital_location_{$lat}_{$lng}")) {
+            $missingIndexes[$index] = $hospital;
+        }
+    }
 
-        return Cache::remember("hospital_location_{$lat}_{$lng}", 86400, function () use ($lat, $lng, $hospital, $apiKey) {
-            $state = $this->googleApi($lat, $lng, $apiKey);
-            return [
-                'name' => $hospital['name'],
-                'latitude' => $lat,
-                'longitude' => $lng,
-                'vicinity' => $hospital['vicinity'],
-                'city' => $state['city'],
-                'pincode' => $state['pincode'],
-            ];
+    // Step 2: Fetch all missing locations in parallel (Solves API N+1 Issue)
+    if (!empty($missingIndexes)) {
+        $responses = Http::pool(function (Pool $pool) use ($missingIndexes, $apiKey) {
+            foreach ($missingIndexes as $index => $hospital) {
+                $lat = $hospital['geometry']['location']['lat'];
+                $lng = $hospital['geometry']['location']['lng'];
+                $pool->as("h_$index")->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                    'latlng' => "{$lat},{$lng}",
+                    'key' => $apiKey,
+                ]);
+            }
         });
+
+        // Step 3: Process and Cache Parallel Responses
+        foreach ($missingIndexes as $index => $hospital) {
+            $response = $responses["h_$index"] ?? null;
+            if ($response && $response->successful()) {
+                $data = $response->json();
+                $state = $this->parseAddressComponents($data);
+                
+                $lat = $hospital['geometry']['location']['lat'];
+                $lng = $hospital['geometry']['location']['lng'];
+                
+                Cache::put("hospital_location_{$lat}_{$lng}", [
+                    'name' => $hospital['name'],
+                    'latitude' => $lat,
+                    'longitude' => $lng,
+                    'vicinity' => $hospital['vicinity'],
+                    'city' => $state['city'],
+                    'pincode' => $state['pincode'],
+                ], 86400);
+            }
+        }
+    }
+
+    // Step 4: Map all results from Cache
+    return array_map(function ($hospital) {
+        $lat = $hospital['geometry']['location']['lat'];
+        $lng = $hospital['geometry']['location']['lng'];
+        return Cache::get("hospital_location_{$lat}_{$lng}");
     }, $hospitals);
+}
+
+/**
+ * Helper to parse Google Geocode address components
+ */
+private function parseAddressComponents($data)
+{
+    $city = $state = $pincode = $area = null;
+    foreach ($data['results'][0]['address_components'] ?? [] as $component) {
+        if (in_array('locality', $component['types'])) $city = $component['long_name'];
+        if (in_array('administrative_area_level_1', $component['types'])) $state = $component['long_name'];
+        if (in_array('postal_code', $component['types'])) $pincode = $component['long_name'];
+        if (in_array('sublocality', $component['types']) || in_array('neighborhood', $component['types'])) $area = $component['long_name'];
+    }
+    return compact('city', 'state', 'pincode', 'area');
 }
 
 private function getCachedHospitalFeatures()

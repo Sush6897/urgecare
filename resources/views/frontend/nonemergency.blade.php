@@ -43,15 +43,16 @@
         @include('frontend.partials.hospital_cards')
       </div>
 
-      <div class="row mt-4">
+      </div> 
+
+      <div class="row mt-4 justify-content-center">
         <div class="col-12 text-center">
             <button id="load-more-btn" class="btn btn-primary" data-offset="3">Load More</button>
-            <div id="loading" style="display: none;">
+            <div id="loading" class="mt-2" style="display: none;">
                 <i class="fas fa-spinner fa-spin"></i> Loading...
             </div>
         </div>
       </div>
-    </div>
 
     
     <div class="modal fade" id="bookNowModal" tabindex="-1" aria-labelledby="bookNowModalLabel" aria-hidden="true">

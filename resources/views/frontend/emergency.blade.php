@@ -117,10 +117,10 @@
             @include('frontend.partials.emergency_cards')
         </div>
 
-        <div class="row mt-4">
+        <div class="row mt-4 justify-content-center">
             <div class="col-12 text-center">
                 <button id="load-more-btn" class="btn btn-primary" data-offset="3" @if(count($hospital) < 3) style="display: none;" @endif>Load More</button>
-                <div id="loading" style="display: none;">
+                <div id="loading" class="mt-2" style="display: none;">
                     <i class="fas fa-spinner fa-spin"></i> Loading...
                 </div>
             </div>
