@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CallLog;
+use App\Models\Hospital;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -308,6 +309,8 @@ class ExotelService
 
             $this->recordEnquiry($callLog, $callSid, 'completed');
 
+            $this->sendPostCallSms($callLog, $dialedTo);
+
             return;
         }
 
@@ -355,6 +358,9 @@ class ExotelService
             'last_exotel_status' => $status,
             'attempts' => $attempts,
         ]);
+
+        // Send Missed Call ALERT to fallback number 7888021021 (as per previous logic)
+        $this->sendPostCallSms($callLog, '917888021021');
     }
 
     private function isNonTerminal(string $status): bool
@@ -406,6 +412,59 @@ class ExotelService
 
             $this->exotelLog()->info('Enquiry updated to completed', [
                 'call_sid' => $callSid,
+            ]);
+        }
+    }
+
+    private function sendPostCallSms(CallLog $callLog, ?string $to): void
+    {
+        if (!$to) {
+            return;
+        }
+
+        $hospital = Hospital::find($callLog->hospital_id);
+        $hospitalName = $hospital ? $hospital->hospital_name : 'Hospital';
+        $patientName = $callLog->patient_name ?? 'Patient';
+        $patientContact = $callLog->from_number ?? '';
+        $helpline = '8149801662';
+
+        // Normalize phone number for SMS
+        $cleanTo = ltrim(preg_replace('/\D/', '', $to), '0');
+        if (strlen($cleanTo) === 10) {
+            $cleanTo = '91' . $cleanTo;
+        }
+
+        $body = "You just spoke with {$patientName} {$patientContact} for {$hospitalName} ambulance help. For more assistance call Team Urge Care {$helpline}";
+
+        try {
+            $url = "https://api.exotel.com/v1/Accounts/{$this->accountSid}/Sms/send.json";
+
+            $response = Http::withBasicAuth($this->apiKey, $this->apiToken)
+                ->asForm()
+                ->post($url, [
+                    'From' => 'URGKER',
+                    'To' => $cleanTo,
+                    'Body' => $body,
+                    'DltTemplateId' => '1707177364516989149',
+                    'DltEntityId' => '1701164398108412688',
+                    'SmsType' => 'transactional',
+                ]);
+
+            if ($response->successful()) {
+                $this->exotelLog()->info("Post-call SMS sent to {$cleanTo}", [
+                    'call_log_id' => $callLog->id,
+                    'response' => $response->json()
+                ]);
+            } else {
+                $this->exotelLog()->error("Failed to send post-call SMS to {$cleanTo}", [
+                    'call_log_id' => $callLog->id,
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+            }
+        } catch (\Exception $e) {
+            $this->exotelLog()->error("Post-call SMS Exception: " . $e->getMessage(), [
+                'call_log_id' => $callLog->id
             ]);
         }
     }
