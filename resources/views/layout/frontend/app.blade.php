@@ -63,7 +63,6 @@
     <input type="hidden" id="latitude" name="latitude" value="">
     <input type="hidden" id="longitude" name="longitude" value="">
 </form>
-  @include('layout.frontend.footer')
 
   @include('layout.frontend.footer')
 
@@ -166,6 +165,13 @@
             var form = $(this);
             var modal = $('#bookNowModal');
             var submitBtn = form.find('button[type="submit"]');
+            var contact = form.find('input[name="contact"]').val();
+
+            // 10-digit validation
+            if (contact.length !== 10 || !/^[6-9][0-9]{9}$/.test(contact)) {
+                iziToast.warning({ title: 'Validation', message: 'Please enter a valid 10-digit mobile number.', position: 'topRight' });
+                return false;
+            }
 
             submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Starting call...');
 
@@ -177,6 +183,7 @@
                 success: function(response) {
                     modal.modal('hide');
                     submitBtn.prop('disabled', false).text('Submit');
+                    form.trigger('reset'); // Clear form fields
                     iziToast.success({ title: 'Success', message: response.message || 'Call initiated successfully!', position: 'topRight' });
                 },
                 error: function(xhr) {

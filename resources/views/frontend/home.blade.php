@@ -76,7 +76,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="contactNumber">Contact Number</label>
-                                <input type="number" class="form-control" id="contactNumber" name="contact" placeholder="Enter contact number" required>
+                                <input type="number" class="form-control" id="contactNumber" name="contact" placeholder="Enter 10 digit number" maxlength="10" pattern="[6-9][0-9]{9}" oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);" required>
                             </div>
                             <button type="submit" class="btn btn-primary">Submit</button>
                         </form>
