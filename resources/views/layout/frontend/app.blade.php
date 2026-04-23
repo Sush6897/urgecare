@@ -35,6 +35,28 @@
 <body>
   @include('layout.frontend.header')
 
+  <!-- Global Loader -->
+  <div id="global-loader" class="fade-out">
+      <div class="network-container">
+          <!-- Vessels with flowing ambulances -->
+          <div class="vessel v1"><i class="fas fa-ambulance flowing-ambulance"></i><div class="hospital-node"><i class="fas fa-plus"></i></div></div>
+          <div class="vessel v2"><i class="fas fa-ambulance flowing-ambulance"></i><div class="hospital-node"><i class="fas fa-plus"></i></div></div>
+          <div class="vessel v3"><i class="fas fa-ambulance flowing-ambulance"></i><div class="hospital-node"><i class="fas fa-plus"></i></div></div>
+          <div class="vessel v4"><i class="fas fa-ambulance flowing-ambulance"></i><div class="hospital-node"><i class="fas fa-plus"></i></div></div>
+          <div class="vessel v5"><i class="fas fa-ambulance flowing-ambulance"></i><div class="hospital-node"><i class="fas fa-plus"></i></div></div>
+          
+          <!-- Central Heart Core -->
+          <div class="urge-heart">
+              <i class="fas fa-heartbeat"></i>
+          </div>
+      </div>
+
+      <div class="urge-text-container">
+          <div class="brand-text">URGE<span>CARE</span></div>
+          <div class="connecting-status">FETCHING NEARBY HOSPITALS<span class="dots-loader"></span></div>
+      </div>
+  </div>
+
   @yield('content')
   <form id="location-form" action="{{route('set.coordinates')}}" method="get">
     
@@ -96,31 +118,41 @@
     }
   </script>
       <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            @if(Session::has('error'))
-            iziToast.error({
-                title: 'error',
-                message: '{{ Session::get("error") }}',
-                backgroundColor: '#40a7a3', // Set the background color to black
-                titleColor: 'white', // Set the title color to white for better visibility
-                messageColor: 'white', // Set the message color to white for better visibility
-                icon: 'mdi mdi-close', // MDI information icon
-                iconColor: 'white',
-            });
-            @endif
-
-            @if(Session::has('success'))
-            iziToast.success({
-                title: 'Success',
-                message: '{{ Session::get("success") }}',
-                backgroundColor: '#f70400', // Set the background color to black
-                titleColor: 'white', // Set the title color to white for better visibility
-                messageColor: 'white', // Set the message color to white for better visibility
-                icon: 'mdi mdi-check', // MDI information icon
-                iconColor: 'white',
-            });
-            @endif
+    $(document).ready(function() {
+        // Show loader on form submission
+        $('form:not(#searchForm):not(#filterForm)').on('submit', function() {
+            $('#global-loader').removeClass('fade-out');
         });
+
+        // Specific handling for location form
+        $('#location-form').on('submit', function() {
+            $('#global-loader').removeClass('fade-out');
+        });
+
+        @if(Session::has('error'))
+        iziToast.error({
+            title: 'Error',
+            message: '{{ Session::get("error") }}',
+            backgroundColor: '#40a7a3',
+            titleColor: 'white',
+            messageColor: 'white',
+            icon: 'mdi mdi-close',
+            iconColor: 'white',
+        });
+        @endif
+
+        @if(Session::has('success'))
+        iziToast.success({
+            title: 'Success',
+            message: '{{ Session::get("success") }}',
+            backgroundColor: '#f70400',
+            titleColor: 'white',
+            messageColor: 'white',
+            icon: 'mdi mdi-check',
+            iconColor: 'white',
+        });
+        @endif
+    });
     </script>
 
 </body>

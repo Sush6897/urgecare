@@ -672,7 +672,212 @@ header a{
     }
 }
 
+
 @keyframes fa-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(359deg); }
+}
+
+/* Symbolic "Life-line Network" Loader for UrgeCare */
+#global-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+#global-loader.fade-out {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.network-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Central UrgeCare Heart Core */
+.urge-heart {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 30px rgba(255, 61, 0, 0.4);
+    z-index: 10;
+    animation: heart-beat 1s infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.urge-heart i {
+    color: #fff;
+    font-size: 35px;
+}
+
+@keyframes heart-beat {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(255, 61, 0, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }
+}
+
+/* Life-line Vessels reaching out to Hospitals */
+.vessel {
+    position: absolute;
+    height: 2px;
+    background: rgba(255, 61, 0, 0.1);
+    transform-origin: left center;
+    top: 50%;
+    left: 50%;
+    width: 120px;
+    z-index: 1;
+}
+
+.v1 { transform: rotate(0deg); }
+.v2 { transform: rotate(72deg); }
+.v3 { transform: rotate(144deg); }
+.v4 { transform: rotate(216deg); }
+.v5 { transform: rotate(288deg); }
+
+/* Hospital Nodes at the end of vessels */
+.hospital-node {
+    position: absolute;
+    right: -10px;
+    top: -9px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: node-appear 0.5s forwards;
+    opacity: 0;
+}
+
+.hospital-node i {
+    font-size: 10px;
+    color: var(--primary-color);
+}
+
+@keyframes node-appear {
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Flowing Ambulances along the vessels */
+.flowing-ambulance {
+    position: absolute;
+    top: -10px;
+    left: 0;
+    color: var(--primary-color);
+    font-size: 14px;
+    animation: flow-to-node 2s infinite linear;
+}
+
+@keyframes flow-to-node {
+    0% { left: 0; opacity: 0; transform: scale(0.5); }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: 100px; opacity: 0; transform: scale(1); }
+}
+
+/* Staggered Animations */
+.v1 .flowing-ambulance { animation-delay: 0s; }
+.v2 .flowing-ambulance { animation-delay: 0.4s; }
+.v3 .flowing-ambulance { animation-delay: 0.8s; }
+.v4 .flowing-ambulance { animation-delay: 1.2s; }
+.v5 .flowing-ambulance { animation-delay: 1.6s; }
+
+/* Text Labeling */
+.urge-text-container {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.brand-text {
+    font-size: 32px;
+    font-weight: 900;
+    color: #333;
+    letter-spacing: -1px;
+}
+
+.brand-text span {
+    color: var(--primary-color);
+}
+
+.connecting-status {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+    letter-spacing: 1px;
+}
+
+.dots-loader::after {
+    content: '...';
+    animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60% { content: '...'; }
+    80%, 100% { content: ''; }
+}
+
+/* Skeleton Loader Styles */
+.skeleton {
+    background: #e0e0e0;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+    background: #fff;
+    margin-bottom: 1.5rem;
+}
+
+.skeleton-title {
+    height: 28px;
+    width: 60%;
+    margin-bottom: 15px;
+}
+
+.skeleton-text {
+    height: 14px;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.skeleton-text.short {
+    width: 40%;
+}
+
+.skeleton-button {
+    height: 40px;
+    width: 100px;
+    border-radius: 4px;
+    margin-top: 15px;
 }

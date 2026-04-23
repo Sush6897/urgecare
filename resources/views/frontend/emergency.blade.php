@@ -113,7 +113,7 @@
     </div>
     <div class="container">
         <div id="hospital-container" class="row">
-            <!-- Hospital Cards -->
+            <!-- Skeletons shown here during AJAX transitions -->
             @include('frontend.partials.emergency_cards')
         </div>
 
@@ -170,11 +170,9 @@
 
 <script>
     function clearSearch() {
-        // alert("hii");
-        document.getElementById('search').value = '';
-        $('#searchForm').submit();
+        $('#search').val('');
+        performFilter();
     }
-
 
     $(document).on('click', '.button.call', function() {
         var hospital_id = $(this).data('hospital-id'); 
@@ -182,6 +180,63 @@
     });
 
     $(document).ready(function() {
+        // Intercept Search Form
+        $('#searchForm').on('submit', function(e) {
+            e.preventDefault();
+            performFilter();
+        });
+
+        // Intercept Filter Form
+        $('#filterForm').on('submit', function(e) {
+            e.preventDefault();
+            $('#filterModal').modal('hide');
+            performFilter();
+        });
+
+        function performFilter() {
+            var container = $('#hospital-container');
+            var search = $('#search').val();
+            var distance = $('#distanceFilter').val();
+            var features = [];
+            $('input[name="feature[]"]:checked').each(function() {
+                features.push($(this).val());
+            });
+            var loadMoreBtn = $('#load-more-btn');
+
+            // Show Skeletons (Buffer Loading)
+            container.empty().append('@include("frontend.partials.skeleton_cards")');
+            loadMoreBtn.hide();
+
+            $.ajax({
+                url: window.location.pathname,
+                method: "GET",
+                data: {
+                    search: search,
+                    distance: distance,
+                    feature: features,
+                    offset: 0
+                },
+                success: function(response) {
+                    container.empty();
+                    if (response.html) {
+                        container.append(response.html);
+                        loadMoreBtn.data('offset', 3);
+                        if (response.hasMore) {
+                            loadMoreBtn.show();
+                        } else {
+                            loadMoreBtn.hide();
+                        }
+                    } else {
+                        container.append('<div class="col-12 text-center py-5"><h3>No hospitals found.</h3></div>');
+                        loadMoreBtn.hide();
+                    }
+                },
+                error: function() {
+                    container.empty().append('<div class="col-12 text-center py-5"><h3>Error searching hospitals. Please try again.</h3></div>');
+                }
+            });
+        }
+
         $('#load-more-btn').on('click', function() {
             var btn = $(this);
             var offset = btn.data('offset');
@@ -226,6 +281,12 @@
                 }
             });
         });
+
+        // Show full-page loader on entry for a "finding" experience
+        $('#global-loader').removeClass('fade-out');
+        setTimeout(function() {
+            $('#global-loader').addClass('fade-out');
+        }, 1500); // 1.5 seconds for a premium feel
     });
 </script>
 

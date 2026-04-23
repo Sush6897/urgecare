@@ -158,6 +158,9 @@
 
         // Handle "Yes" button click
         document.getElementById('yesBtn').addEventListener('click', function() {
+            // Show loader immediately
+            $('#global-loader').removeClass('fade-out');
+
             // Always clear previous location data from localStorage
             localStorage.removeItem('latitude');
             localStorage.removeItem('longitude');
