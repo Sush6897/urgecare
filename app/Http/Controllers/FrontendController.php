@@ -642,6 +642,10 @@ private function googleApi($latitude, $longitude, $apiKey)
             return back()->with('error', $e->getMessage());
         }
 
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Call started successfully!']);
+        }
+
         return back()->with('success', 'Call started...');
     }
 

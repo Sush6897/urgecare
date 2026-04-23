@@ -119,12 +119,12 @@
   </script>
       <script>
     $(document).ready(function() {
-        // Show loader on form submission
-        $('form:not(#searchForm):not(#filterForm)').on('submit', function() {
+        // Show loader on form submission (only for non-AJAX/standard forms)
+        $('form').not('#searchForm, #filterForm, #bookNowModal form, #location-form').on('submit', function() {
             $('#global-loader').removeClass('fade-out');
         });
 
-        // Specific handling for location form
+        // Specific handling for location form (which triggers a full page refresh/redirect)
         $('#location-form').on('submit', function() {
             $('#global-loader').removeClass('fade-out');
         });

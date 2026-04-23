@@ -106,6 +106,53 @@
     $('#hospital_id').val(hospital_id);
   });
 
+  // Handle Call Form AJAX
+  $('#bookNowModal form').on('submit', function(e) {
+      e.preventDefault();
+      var form = $(this);
+      var modal = $('#bookNowModal');
+      var submitBtn = form.find('button[type="submit"]');
+
+      submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Starting call...');
+
+      $.ajax({
+          url: form.attr('action'),
+          method: "POST",
+          data: form.serialize(),
+          success: function(response) {
+              modal.modal('hide');
+              submitBtn.prop('disabled', false).text('Submit');
+              
+              if (typeof iziToast !== 'undefined') {
+                  iziToast.success({
+                      title: 'Success',
+                      message: response.message || 'Call initiated successfully!',
+                      position: 'topRight'
+                  });
+              } else {
+                  alert(response.message || 'Call initiated successfully!');
+              }
+          },
+          error: function(xhr) {
+              submitBtn.prop('disabled', false).text('Submit');
+              var errorMsg = 'Failed to initiate call. Please try again.';
+              if (xhr.responseJSON && xhr.responseJSON.message) {
+                  errorMsg = xhr.responseJSON.message;
+              }
+              
+              if (typeof iziToast !== 'undefined') {
+                  iziToast.error({
+                      title: 'Error',
+                      message: errorMsg,
+                      position: 'topRight'
+                  });
+              } else {
+                  alert(errorMsg);
+              }
+          }
+      });
+  });
+
   // Load More Logic
   $('#load-more-btn').on('click', function() {
       var btn = $(this);
