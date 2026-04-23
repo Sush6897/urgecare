@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-  
+  <script src="{{asset('/backend/assets/js/jquery-3.2.1.min.js')}}"></script>
   <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-11032053469"></script>
     <script>
@@ -65,7 +65,8 @@
 </form>
   @include('layout.frontend.footer')
 
-  <script src="{{asset('/backend/assets/js/jquery-3.2.1.min.js')}}"></script>
+  @include('layout.frontend.footer')
+
 
   <!-- <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
@@ -152,6 +153,33 @@
             iconColor: 'white',
         });
         @endif
+
+        // Global AJAX handler for 'Book Now' form
+        $(document).on('submit', '#bookNowModal form', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var modal = $('#bookNowModal');
+            var submitBtn = form.find('button[type="submit"]');
+
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Starting call...');
+
+            $.ajax({
+                url: form.attr('action'),
+                method: "POST",
+                data: form.serialize(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function(response) {
+                    modal.modal('hide');
+                    submitBtn.prop('disabled', false).text('Submit');
+                    iziToast.success({ title: 'Success', message: response.message || 'Call initiated successfully!', position: 'topRight' });
+                },
+                error: function(xhr) {
+                    submitBtn.prop('disabled', false).text('Submit');
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to initiate call.';
+                    iziToast.error({ title: 'Error', message: msg, position: 'topRight' });
+                }
+            });
+        });
     });
     </script>
 

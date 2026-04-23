@@ -73,7 +73,6 @@ class FrontendController extends Controller
 
   public function setcoordinates(Request $request)
   {
-
     $latitude = $request->query('latitude');
     $longitude = $request->query('longitude');
 
@@ -95,8 +94,11 @@ class FrontendController extends Controller
         'user_agent' => $request->userAgent(),
     ]);
 
-    // Redirect to the desired route or back to the previous page
-    return redirect()->route('longitude');
+    // Redirect with coordinates as fallback params to avoid session loss issues on live
+    return redirect()->route('longitude', [
+        'latitude' => $latitude,
+        'longitude' => $longitude
+    ]);
   }
 
 
@@ -190,11 +192,14 @@ public function post(Request $request)
     set_time_limit(0);
     $apiKey = 'AIzaSyDDoU-OX0rL-p06QWqGtHq-GdorZ-M-aoY';
 
-    // Retrieve latitude and longitude from session
-    $latitude = session('latitude');
-    $longitude = session('longitude');
+    // Retrieve from request first (reliable on live), then fallback to session
+    $latitude = $request->latitude ?: session('latitude');
+    $longitude = $request->longitude ?: session('longitude');
 
     if (!$latitude || !$longitude) {
+        if ($request->ajax()) {
+            return response()->json(['error' => 'Location missing'], 400);
+        }
         return redirect()->route('home')->with('error', 'Please enable location access.');
     }
 
