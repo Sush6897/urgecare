@@ -25,10 +25,9 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover table-center mb-0">
+                        <table class="datatable table table-hover table-center mb-0">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
                                     <th>Date/Time</th>
                                     <th>IP Address</th>
                                     <th>City</th>
@@ -41,7 +40,6 @@
                             <tbody>
                                 @foreach($visits as $visit)
                                 <tr>
-                                    <td>{{ $visit->id }}</td>
                                     <td>{{ $visit->created_at->format('d M Y, h:i A') }}</td>
                                     <td>{{ $visit->ip_address }}</td>
                                     <td>{{ $visit->city }}</td>
@@ -66,9 +64,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-4">
-                        {{ $visits->links() }}
-                    </div>
+                  
                 </div>
             </div>
         </div>
