@@ -173,10 +173,7 @@
         performFilter();
     }
 
-    $(document).on('click', '.button.call', function() {
-        var hospital_id = $(this).data('hospital-id'); 
-        $('#hospital_id').val(hospital_id);
-    });
+
 
     $(document).ready(function() {
         // Intercept Search Form

@@ -154,6 +154,12 @@
         });
         @endif
 
+        // Global handler to set Hospital ID when any 'Book Now' button is clicked
+        $(document).on('click', '[data-target="#bookNowModal"]', function() {
+            var hospitalId = $(this).attr('data-hospital-id');
+            $('#bookNowModal #hospital_id').val(hospitalId);
+        });
+
         // Global AJAX handler for 'Book Now' form
         $(document).on('submit', '#bookNowModal form', function(e) {
             e.preventDefault();

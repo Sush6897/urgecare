@@ -98,15 +98,6 @@
   }
 
 
-  $(document).on('click', '.button.call', function() {
-    // Replace with your logic to get the hospital_id
-    var hospital_id = $(this).data('hospital-id'); // Get hospital_id from button's data attribute
-
-    // Set the value to the input field
-    $('#hospital_id').val(hospital_id);
-  });
-
-
 
   // Load More Logic
   $('#load-more-btn').on('click', function() {
