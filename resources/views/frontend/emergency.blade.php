@@ -200,13 +200,18 @@
             var loadMoreBtn = $('#load-more-btn');
 
             // Show Skeletons (Buffer Loading)
-            container.empty().append('@include("frontend.partials.skeleton_cards")');
+            container.empty().append({!! json_encode(view("frontend.partials.skeleton_cards")->render()) !!});
             loadMoreBtn.hide();
 
+            var lat = new URLSearchParams(window.location.search).get('latitude');
+            var lng = new URLSearchParams(window.location.search).get('longitude');
+
             $.ajax({
-                url: window.location.pathname,
+                url: window.location.href, // Use full URL to keep lat/lng
                 method: "GET",
                 data: {
+                    latitude: lat,
+                    longitude: lng,
                     search: search,
                     distance: distance,
                     feature: features,
@@ -223,7 +228,15 @@
                             loadMoreBtn.hide();
                         }
                     } else {
-                        container.append('<div class="col-12 text-center py-5"><h3>No hospitals found.</h3></div>');
+                        container.append(`
+                            <div class="col-12 text-center py-5">
+                                <div class="no-results-card p-5 shadow-sm rounded-lg bg-white">
+                                    <i class="fas fa-hospital-symbol fa-4x mb-3 text-muted"></i>
+                                    <h3 class="font-weight-bold">No Hospitals Found</h3>
+                                    <p class="text-muted">We couldn't find any emergency hospitals matching your criteria. Try adjusting your filters or search terms.</p>
+                                </div>
+                            </div>
+                        `);
                         loadMoreBtn.hide();
                     }
                 },
@@ -247,10 +260,15 @@
             btn.hide();
             loading.show();
 
+            var lat = new URLSearchParams(window.location.search).get('latitude');
+            var lng = new URLSearchParams(window.location.search).get('longitude');
+
             $.ajax({
                 url: window.location.href,
                 method: "GET",
                 data: {
+                    latitude: lat,
+                    longitude: lng,
                     offset: offset,
                     search: search,
                     distance: distance,
@@ -279,6 +297,12 @@
         });
 
 
+
+        // Populate Hospital ID in Modal
+        $(document).on('click', '[data-target="#bookNowModal"]', function() {
+            var hospitalId = $(this).data('hospital-id');
+            $('#hospital_id').val(hospitalId);
+        });
 
         // Show full-page loader on entry for a "finding" experience
         $('#global-loader').removeClass('fade-out');

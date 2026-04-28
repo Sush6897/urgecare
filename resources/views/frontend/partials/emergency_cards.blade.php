@@ -31,4 +31,11 @@
     </div>
 </div>
 @empty
+<div class="col-12 text-center py-5">
+    <div class="no-results-card p-5 shadow-sm rounded-lg bg-white">
+        <i class="fas fa-hospital-symbol fa-4x mb-3 text-muted"></i>
+        <h3 class="font-weight-bold">No Hospitals Found</h3>
+        <p class="text-muted">We couldn't find any emergency hospitals in your immediate area. Try increasing the search distance or checking your location settings.</p>
+    </div>
+</div>
 @endforelse

@@ -37,7 +37,7 @@ class Hospital extends Authenticatable
         'remember_token',
     ];
 
-    public function enquiry(){
+    public function enquiries(){
         return $this->hasMany(Enquiry::class, 'hospital_id', 'id');
     }
 

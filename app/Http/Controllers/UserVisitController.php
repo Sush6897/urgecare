@@ -9,7 +9,7 @@ class UserVisitController extends Controller
 {
     public function index()
     {
-        $visits = UserVisit::orderBy('created_at', 'desc')->paginate(15);
+        $visits = UserVisit::orderBy('created_at', 'desc')->get();
         return view('backend.user_visits.index', compact('visits'));
     }
 
