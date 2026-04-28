@@ -212,7 +212,7 @@ public function post(Request $request)
     
     $offset = (int) $request->input('offset', 0);
     $limit = 3;
-    $radius = (float) $request->input('distance', 2) * 1000;
+    $radius = (float) ($request->input('distance') ?: 2) * 1000;
 
     // Fetch nearby hospitals using Places API with pagetoken support (cached results)
     $allResults = $this->getCachedNearbyHospitals($latitude, $longitude, $radius, $apiKey);
@@ -259,7 +259,7 @@ public function post(Request $request)
     $totalCount = $hospitalQuery->count();
 
     // Get paginated results
-    $hospitals = $hospitalQuery->offset($offset)->limit($limit)->get();
+    $hospitals = $hospitalQuery->orderBy('id')->offset($offset)->limit($limit)->get();
 
     // Fetch unique features (Cached to reduce repetitive calls)
     $features = $this->getCachedHospitalFeatures();
@@ -296,28 +296,32 @@ private function getCachedNearbyHospitals($latitude, $longitude, $radius, $apiKe
         $results = [];
         $pageToken = null;
 
-        do {
-            $params = [
-                'location' => "{$latitude},{$longitude}",
-                'radius' => $radius,
-                'type' => 'hospital',
-                'key' => $apiKey,
-            ];
+        try {
+            do {
+                $params = [
+                    'location' => "{$latitude},{$longitude}",
+                    'radius' => $radius,
+                    'type' => 'hospital',
+                    'key' => $apiKey,
+                ];
 
-            if ($pageToken) {
-                $params['pagetoken'] = $pageToken;
-                sleep(2); // Pause between pagetoken requests as recommended
-            }
+                if ($pageToken) {
+                    $params['pagetoken'] = $pageToken;
+                    sleep(2); // Pause between pagetoken requests as recommended
+                }
 
-            $response = Http::get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', $params);
-            $data = $response->json();
+                $response = Http::get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', $params);
+                $data = $response->json();
 
-            if (!empty($data['results'])) {
-                $results = array_merge($results, $data['results']);
-            }
+                if (!empty($data['results'])) {
+                    $results = array_merge($results, $data['results']);
+                }
 
-            $pageToken = $data['next_page_token'] ?? null;
-        } while ($pageToken);
+                $pageToken = $data['next_page_token'] ?? null;
+            } while ($pageToken);
+        } catch (\Exception $e) {
+            Log::error("Google Nearby Search API Error: " . $e->getMessage());
+        }
 
         return $results;
     });
@@ -351,7 +355,7 @@ private function mapHospitalLocations(array $hospitals, $apiKey)
         // Step 3: Process and Cache Parallel Responses
         foreach ($missingIndexes as $index => $hospital) {
             $response = $responses["h_$index"] ?? null;
-            if ($response && $response->successful()) {
+            if ($response instanceof \Illuminate\Http\Client\Response && $response->successful()) {
                 $data = $response->json();
                 $state = $this->parseAddressComponents($data);
                 
@@ -411,33 +415,38 @@ private function getCachedHospitalFeatures()
 
 private function googleApi($latitude, $longitude, $apiKey)
 {
-    $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
-        'latlng' => "{$latitude},{$longitude}",
-        'key' => $apiKey,
-    ]);
+    try {
+        $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+            'latlng' => "{$latitude},{$longitude}",
+            'key' => $apiKey,
+        ]);
 
-    $data = $response->json();
+        $data = $response->json();
 
-    $city = null;
-    $state = null;
-    $pincode = null;
-    $area = null;
-    foreach ($data['results'][0]['address_components'] ?? [] as $component) {
-        if (in_array('locality', $component['types'])) {
-            $city = $component['long_name'];
+        $city = null;
+        $state = null;
+        $pincode = null;
+        $area = null;
+        foreach ($data['results'][0]['address_components'] ?? [] as $component) {
+            if (in_array('locality', $component['types'])) {
+                $city = $component['long_name'];
+            }
+            if (in_array('administrative_area_level_1', $component['types'])) {
+                $state = $component['long_name'];
+            }
+            if (in_array('postal_code', $component['types'])) {
+                $pincode = $component['long_name'];
+            }
+            if (in_array('sublocality', $component['types']) || in_array('neighborhood', $component['types'])) {
+                $area = $component['long_name'];
+            }
         }
-        if (in_array('administrative_area_level_1', $component['types'])) {
-            $state = $component['long_name'];
-        }
-        if (in_array('postal_code', $component['types'])) {
-            $pincode = $component['long_name'];
-        }
-        if (in_array('sublocality', $component['types']) || in_array('neighborhood', $component['types'])) {
-            $area = $component['long_name'];
-        }
+
+        return compact('city', 'state', 'pincode', 'area');
+    } catch (\Exception $e) {
+        Log::error("Google API Error in googleApi: " . $e->getMessage());
+        return ['city' => null, 'state' => null, 'pincode' => null, 'area' => null];
     }
-
-    return compact('city', 'state', 'pincode', 'area');
 }
 
   public function aboutus()
