@@ -26,6 +26,11 @@ class HospitalAuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        $hospital = Hospital::where('email', $request->email)->first();
+        if ($hospital && $hospital->status !== 'active') {
+            return back()->with('error', 'Your hospital account is currently inactive. Please contact administration.');
+        }
+
         if (Auth::guard('hospital')->attempt(['email' => $request->email, 'password' => $request->password])) {
             $request->session()->regenerate();
             return redirect()->intended(route('hospital.dashboard'));

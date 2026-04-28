@@ -400,7 +400,7 @@ private function parseAddressComponents($data)
 private function getCachedHospitalFeatures()
 {
     return Cache::remember('hospital_features', 86400, function () {
-        return Hospital::where('emergency', 1)
+        return Hospital::where('emergency', 1)->where('status', 'active')
             ->select('features1', 'features2', 'features3', 'features4')
             ->distinct()
             ->get()
@@ -637,7 +637,7 @@ private function googleApi($latitude, $longitude, $apiKey)
             'patient_name' => 'required|string|max:255',
             'contact' => 'required|digits_between:10,15|numeric'
         ]);
-        $hospital = Hospital::with(['contacts' => fn ($q) => $q->orderBy('id')])->findOrFail($request->hospital_id);
+        $hospital = Hospital::where('status', 'active')->with(['contacts' => fn ($q) => $q->orderBy('id')])->findOrFail($request->hospital_id);
 
         $contacts = $hospital->contacts->pluck('contact')->toArray();
         $numbers = array_values(array_unique(array_filter($contacts)));
