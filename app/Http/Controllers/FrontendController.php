@@ -68,7 +68,8 @@ class FrontendController extends Controller
 
   public function faq()
   {
-    return view('frontend.faq');
+    $faqs = \App\Models\Faq::where('status', 'active')->orderBy('order')->get();
+    return view('frontend.faq', compact('faqs'));
   }
 
   public function setcoordinates(Request $request)

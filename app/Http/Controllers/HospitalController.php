@@ -239,7 +239,25 @@ class HospitalController extends Controller
 
         return redirect()->route('hospital.trash')->with('success', 'Hospital restored successfully.');
     }
-    
+
+    public function bulkStatusUpdate(Request $request)
+    {
+        $ids = $request->ids;
+        $status = $request->status;
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'No hospitals selected.']);
+        }
+
+        if (!in_array($status, ['active', 'inactive'])) {
+            return response()->json(['success' => false, 'message' => 'Invalid status.']);
+        }
+
+        Hospital::whereIn('id', $ids)->update(['status' => $status]);
+
+        return response()->json(['success' => true, 'message' => 'Bulk status updated successfully.']);
+    }
+
     public function fetchCoordinates(Request $request)
     {
         $url = $request->gmap;

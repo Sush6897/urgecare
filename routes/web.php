@@ -13,6 +13,7 @@ use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ZohoController;
 use App\Http\Controllers\UserVisitController;
+use App\Http\Controllers\FaqController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,9 +64,13 @@ Route::get('/hospital/password/reset/{token}', [HospitalAuthController::class, '
 Route::post('/hospital/password/reset', [HospitalAuthController::class, 'reset'])->name('hospital.password.update');
 
 Route::resource('hospital', HospitalController::class)->middleware('auth');
+Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
+    Route::resource('faq', FaqController::class);
+});
 Route::resource('setting', SettingController::class)->only(['index', 'create', 'store'])->middleware('auth');
 Route::get('/hospitals/trash', [HospitalController::class, 'trash'])->middleware('auth')->name('hospital.trash');
 Route::post('/hospitals/restore/{id}', [HospitalController::class, 'restore'])->middleware('auth')->name('hospital.restore');
+Route::post('/hospitals/bulk-status', [HospitalController::class, 'bulkStatusUpdate'])->middleware('auth')->name('hospital.bulk-status');
 Route::get('/fetch-coordinates', [HospitalController::class, 'fetchCoordinates'])->name('fetchCoordinates');
 Route::get('/contact-us', [FrontendController::class, 'contactus']);
 Route::post('/partners', [PartnerController::class, 'store'])->name('partners.store');
