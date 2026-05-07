@@ -630,6 +630,39 @@ private function googleApi($latitude, $longitude, $apiKey)
   //     return response()->json(['status' => 'ok']);
   // }
 
+    // public function call(Request $request, ExotelService $exotel)
+    // {
+    //     $request->validate([
+    //         'hospital_id' => "required",
+    //         'patient_name' => 'required|string|max:255',
+    //         'contact' => 'required|digits_between:10,15|numeric'
+    //     ]);
+    //     $hospital = Hospital::where('status', 'active')->with(['contacts' => fn ($q) => $q->orderBy('id')])->findOrFail($request->hospital_id);
+
+    //     $contacts = $hospital->contacts->pluck('contact')->toArray();
+    //     $numbers = array_values(array_unique(array_filter($contacts)));
+    //     if (empty($numbers)) {
+    //         return back()->with('error', 'No contact numbers found');
+    //     }
+
+    //     try {
+    //         $callLog = $exotel->createLogAndStartDial(
+    //             (string) $request->contact,
+    //             $numbers,
+    //             $request->patient_name,
+    //             (int) $hospital->id
+    //         );
+    //     } catch (\InvalidArgumentException $e) {
+    //         return back()->with('error', $e->getMessage());
+    //     }
+
+    //     if ($request->ajax()) {
+    //         return response()->json(['success' => true, 'message' => 'Call started successfully!']);
+    //     }
+
+    //     return back()->with('success', 'Call started...');
+    // }
+
     public function call(Request $request, ExotelService $exotel)
     {
         $request->validate([
@@ -637,32 +670,31 @@ private function googleApi($latitude, $longitude, $apiKey)
             'patient_name' => 'required|string|max:255',
             'contact' => 'required|digits_between:10,15|numeric'
         ]);
-        $hospital = Hospital::where('status', 'active')->with(['contacts' => fn ($q) => $q->orderBy('id')])->findOrFail($request->hospital_id);
+
+        $hospital = Hospital::where('status', 'active')
+            ->with(['contacts' => fn ($q) => $q->orderBy('id')])
+            ->findOrFail($request->hospital_id);
 
         $contacts = $hospital->contacts->pluck('contact')->toArray();
         $numbers = array_values(array_unique(array_filter($contacts)));
+
         if (empty($numbers)) {
             return back()->with('error', 'No contact numbers found');
         }
 
         try {
             $callLog = $exotel->createLogAndStartDial(
-                (string) $request->contact,
-                $numbers,
+                (string) $request->contact, // patient
+                $numbers,                   // hospitals
                 $request->patient_name,
                 (int) $hospital->id
             );
-        } catch (\InvalidArgumentException $e) {
+        } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
-        }
-
-        if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Call started successfully!']);
         }
 
         return back()->with('success', 'Call started...');
     }
-
   public function urgecare()
   {
     return view('frontend.urgecare');

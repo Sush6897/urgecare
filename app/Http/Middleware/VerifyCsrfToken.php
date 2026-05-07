@@ -14,5 +14,6 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'exotel/call-status',
         'exotel/callback',
+        'exotel/flow',
     ];
 }

@@ -82,72 +82,85 @@ class ExotelService
     }
 
     /**
-     * Place Exotel connect for the number at the given index.
+     * Place Exotel connect for all numbers (parallel ringing).
      */
-    public function placeCall(CallLog $callLog, int $index): ?string
+    // public function placeCall(CallLog $callLog): ?string
+    // {
+    //     $numbers = array_map([$this, 'normalizePhone'], $callLog->numbers);
+    //     if (empty($numbers)) {
+    //         return null;
+    //     }
+
+    //     $result = $this->connect($callLog->from_number, $numbers, $callLog->id);
+    //     if (! $result['ok']) {
+    //         $this->exotelLog()->error('Exotel parallel connect failed', [
+    //             'call_log_id' => $callLog->id,
+    //             'error' => $result['error'] ?? null
+    //         ]);
+
+    //         return null;
+    //     }
+
+    //     return $result['call_sid'] ?? null;
+    // }
+    public function placeCall(CallLog $callLog): ?string
     {
-        $numbers = $callLog->numbers;
-        if (! isset($numbers[$index])) {
+        $numbers = array_map([$this, 'normalizePhone'], $callLog->numbers);
+        if (empty($numbers)) {
             return null;
         }
 
-        $result = $this->connect($callLog->from_number, $numbers[$index], $callLog->id);
+        $result = $this->connect($callLog->from_number, $numbers, $callLog->id);
         if (! $result['ok']) {
-            $this->exotelLog()->error('Exotel connect failed', ['call_log_id' => $callLog->id, 'error' => $result['error'] ?? null]);
+            $this->exotelLog()->error('Exotel parallel connect failed', [
+                'call_log_id' => $callLog->id,
+                'error' => $result['error'] ?? null
+            ]);
 
             return null;
         }
 
         return $result['call_sid'] ?? null;
     }
-
     /**
      * @return array{ok: bool, call_sid?: string, error?: string, raw?: mixed}
      */
-    public function connect(string $from, string $to, int $callLogId): array
+    public function connect(string $from, array $to, int $callLogId): array
     {
         if ($this->accountSid === '' || $this->apiKey === '' || $this->apiToken === '' || $this->callerId === '') {
-            return ['ok' => false, 'error' => 'Exotel is not configured (check EXOTEL_* env keys).'];
+            return ['ok' => false, 'error' => 'Exotel is not configured.'];
         }
 
-        $url = "https://api.exotel.com/v1/Accounts/{$this->accountSid}/Calls/connect.json";
+        $url = "https://api.exotel.com/v1/Accounts/{$this->accountSid}/Calls.json";
+        $flowUrl = route('exotel.flow', ['CustomField' => $callLogId]);
 
         $payload = [
-            'From' => $from,
-            'To' => $to,
+            'From' => $from, // Dial patient first
+            'To' => $this->callerId, // Required but overridden by Url
             'CallerId' => $this->callerId,
+            'Url' => $flowUrl,
             'StatusCallback' => route('exotel.callback'),
             'CustomField' => (string) $callLogId,
             'Record' => 'true',
-            'RecordingChannels' => 'single',
-            'RecordingFormat' => 'mp3',
         ];
 
-        // Without this, Exotel often omits Legs[] / leg Status — failover logic never sees reject/no-answer.
-        $events = (string) config('services.exotel.status_callback_events', 'terminal');
-        if ($events !== '') {
-            $payload['StatusCallbackEvents[0]'] = $events;
-        }
-
-        $contentType = (string) config('services.exotel.status_callback_content_type', '');
-        if ($contentType !== '') {
-            $payload['StatusCallbackContentType'] = $contentType;
-        }
+        $this->exotelLog()->info("Initiating parallel call flow", [
+            'patient' => $from,
+            'hospital_count' => count($to),
+            'flow_url' => $flowUrl
+        ]);
 
         $response = Http::withBasicAuth($this->apiKey, $this->apiToken)
             ->asForm()
             ->post($url, $payload);
 
-        if ($response->failed()) {
-            return ['ok' => false, 'error' => $response->body(), 'raw' => $response->json()];
+        if ($response->successful()) {
+            $sid = $response->json()['Call']['Sid'] ?? null;
+            return ['ok' => true, 'call_sid' => $sid];
+        } else {
+            return ['ok' => false, 'error' => $response->body()];
         }
-
-        $data = $response->json();
-        $sid = $data['Call']['Sid'] ?? null;
-
-        return ['ok' => true, 'call_sid' => $sid, 'raw' => $data];
     }
-
     public function handleCallback(Request $request): void
     {
         $this->exotelLog()->info('Exotel callback', $request->all());
@@ -289,15 +302,14 @@ class ExotelService
     private function processTerminalStatus(CallLog $callLog, string $status, ?string $callSid): void
     {
         $numbers = $callLog->numbers;
-        $idx = $callLog->current_index;
-        $dialedTo = $numbers[$idx] ?? null;
+        $dialedTo = implode(',', $numbers);
 
         $attempts = $callLog->attempts ?? [];
         $attempts[] = [
-            'at' => now()->toIso8601String(),
             'to' => $dialedTo,
             'call_sid' => $callSid,
             'exotel_status' => $status,
+            'type' => 'parallel',
         ];
 
         if (in_array($status, self::TERMINAL_SUCCESS, true)) {
@@ -309,46 +321,8 @@ class ExotelService
 
             $this->recordEnquiry($callLog, $callSid, 'completed');
 
-            $this->sendPostCallSms($callLog, $dialedTo);
-
-            return;
-        }
-
-        if (! in_array($status, self::TERMINAL_FAILURE, true)) {
-            $callLog->update([
-                'last_exotel_status' => $status,
-                'attempts' => $attempts,
-            ]);
-
-            return;
-        }
-
-        $nextIndex = $idx + 1;
-        if (isset($numbers[$nextIndex])) {
-            $this->exotelLog()->info('Exotel failover: dialing next number', [
-                'call_log_id' => $callLog->id,
-                'from_index' => $idx,
-                'to_index' => $nextIndex,
-                'failed_status' => $status,
-                'next_to' => $numbers[$nextIndex],
-            ]);
-
-            $callLog->update([
-                'current_index' => $nextIndex,
-                'last_exotel_status' => $status,
-                'attempts' => $attempts,
-            ]);
-
-            $model = $callLog->fresh();
-            $newSid = $this->placeCall($model, $nextIndex);
-            if ($newSid) {
-                $model->update(['call_sid' => $newSid]);
-            } else {
-                $model->update([
-                    'status' => CallLog::STATUS_EXHAUSTED,
-                    'last_exotel_status' => 'connect_failed',
-                ]);
-            }
+            $answeredBy = request()->input('DialWhomNumber') ?? ($numbers[0] ?? null);
+            $this->sendPostCallSms($callLog, $answeredBy);
 
             return;
         }
@@ -359,7 +333,6 @@ class ExotelService
             'attempts' => $attempts,
         ]);
 
-        // Send Missed Call ALERT to fallback number 7888021021 (as per previous logic)
         $this->sendPostCallSms($callLog, '917888021021');
     }
 
@@ -375,7 +348,7 @@ class ExotelService
 
     private function normalizePhone(string $value): string
     {
-        return preg_replace('/\s+/', '', $value) ?? $value;
+        return preg_replace('/\D/', '', $value) ?? $value;
     }
 
     private function recordEnquiry(CallLog $callLog, ?string $callSid, string $status = 'initiated'): void
@@ -387,31 +360,34 @@ class ExotelService
         $enquiry = DB::table('enquiries')->where('sid', $callSid)->first();
 
         if (! $enquiry) {
-            $targetNumber = $callLog->numbers[$callLog->current_index] ?? ($callLog->numbers[0] ?? '');
+            $targetNumber = request()->input('DialWhomNumber') 
+                ?? ($callLog->numbers[0] ?? '');
 
             DB::table('enquiries')->insert([
                 'patient_name' => $callLog->patient_name,
-                'hospital_id' => $callLog->hospital_id,
-                'sid' => $callSid,
                 'from' => $callLog->from_number,
+                'hospital_id' => $callLog->hospital_id,
                 'to' => $targetNumber,
+                'sid' => $callSid,
                 'status' => $status,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            $this->exotelLog()->info("Enquiry recorded as {$status}", [
-                'call_log_id' => $callLog->id,
+            Log::channel('exotel')->info('Enquiry recorded', [
+                'patient' => $callLog->patient_name,
                 'call_sid' => $callSid,
             ]);
         } elseif ($status === 'completed' && $enquiry->status !== 'completed') {
             DB::table('enquiries')->where('sid', $callSid)->update([
                 'status' => 'completed',
+                'to' => request()->input('DialWhomNumber') ?? $enquiry->to,
                 'updated_at' => now(),
             ]);
 
-            $this->exotelLog()->info('Enquiry updated to completed', [
+            Log::channel('exotel')->info('Enquiry marked as completed', [
                 'call_sid' => $callSid,
+                'answered_by' => request()->input('DialWhomNumber')
             ]);
         }
     }

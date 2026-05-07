@@ -85,6 +85,8 @@ Route::post('/call', [FrontendController::class, 'call'])->name('call');
 Route::post('/exotel/initiate', [ExotelController::class, 'initiateCall'])->name('exotel.initiate');
 Route::post('/exotel/callback', [ExotelController::class, 'handleCallback'])
     ->name('exotel.callback');
+Route::post('/exotel/flow', [\App\Http\Controllers\ExotelFlowController::class, 'handle'])
+    ->name('exotel.flow');
 // Route::post('/exotel/flow', [FrontendController::class, 'exotelFlow'])->name('exotel.flow');
 // Route::get('/exotel/dial-status', [FrontendController::class, 'dialStatus'])->name('dial.status');
 // Route::post('/exotel/call-status', [FrontendController::class, 'handleCallStatus'])->name('exotel.callback');

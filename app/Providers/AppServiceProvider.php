@@ -19,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (str_contains(config('app.url'), 'https://')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         view()->composer(['layout.frontend.app', 'frontend.*'], function ($view) {
             $view->with('setting', \App\Models\Setting::first());
         });
