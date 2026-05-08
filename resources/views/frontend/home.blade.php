@@ -253,25 +253,5 @@
     
 </script>
 
-
-
-
-
-@if(isset($setting))
-<div class="floating-icons-container">
-    @if($setting->is_whatsapp_icon && $setting->whatsapp_number)
-    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $setting->whatsapp_number) }}" class="floating-icon whatsapp" target="_blank" title="WhatsApp Us">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-    @endif
-
-    @if($setting->is_call_icon && $setting->contact_number)
-    <a href="tel:{{ $setting->contact_number }}" class="floating-icon call" title="Call Us">
-        <i class="fas fa-phone-alt fa-spin-slow"></i>
-    </a>
-    @endif
-</div>
-@endif
-
 @endsection
 

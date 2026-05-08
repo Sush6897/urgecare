@@ -53,7 +53,7 @@
 
       <div class="urge-text-container">
           <div class="brand-text">URGE<span>CARE</span></div>
-          <div class="connecting-status">FETCHING NEARBY HOSPITALS<span class="dots-loader"></span></div>
+          <div class="connecting-status">FETCHING NEARBY AMBULANCE<span class="dots-loader"></span></div>
       </div>
   </div>
 

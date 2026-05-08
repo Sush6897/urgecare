@@ -231,9 +231,9 @@
                         container.append(`
                             <div class="col-12 text-center py-5">
                                 <div class="no-results-card p-5 shadow-sm rounded-lg bg-white">
-                                    <i class="fas fa-hospital-symbol fa-4x mb-3 text-muted"></i>
-                                    <h3 class="font-weight-bold">No Hospitals Found</h3>
-                                    <p class="text-muted">We couldn't find any emergency hospitals matching your criteria. Try adjusting your filters or search terms.</p>
+                                    <i class="fas fa-ambulance fa-4x mb-3 text-muted"></i>
+                                    <h3 class="font-weight-bold">No Emergency Ambulance Found</h3>
+                                    <p class="text-muted">We couldn't find any emergency ambulance matching your criteria. Try adjusting your filters or search terms.</p>
                                 </div>
                             </div>
                         `);
@@ -311,5 +311,20 @@
         }, 1500); // 1.5 seconds for a premium feel
     });
 </script>
+@if(isset($setting))
+<div class="floating-icons-container">
+    @if($setting->is_whatsapp_icon && $setting->whatsapp_number)
+    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $setting->whatsapp_number) }}" class="floating-icon whatsapp" target="_blank" title="WhatsApp Us">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    @endif
+
+    @if($setting->is_call_icon && $setting->contact_number)
+    <a href="tel:{{ $setting->contact_number }}" class="floating-icon call" title="Call Us">
+        <i class="fas fa-phone-alt fa-spin-slow"></i>
+    </a>
+    @endif
+</div>
+@endif
 
 @endsection

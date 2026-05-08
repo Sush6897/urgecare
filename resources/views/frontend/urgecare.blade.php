@@ -29,7 +29,7 @@
 
                 <h2 class="sec-title">Emergency Ambulance</h2>
 
-                <a href="{{ setting('is_emergency_link') ? route('home') : 'tel:+91' . setting('emergency_number') }}"
+                <a href="{{ setting('is_emergency_link') ? route('home') : 'tel:' . setting('emergency_number') }}"
                    class="btn btn-primary">
                     {{ setting('is_emergency_link') ? 'Find Nearest Ambulance' : 'Call Now' }}
                 </a>
@@ -54,7 +54,7 @@
 
                 <h2 class="sec-title">Non-Emergency Ambulance</h2>
 
-                <a href="tel:+91{{ setting('non_emergency_number') }}"
+                <a href="tel:{{ setting('non_emergency_number') }}"
                    class="btn btn-primary">
 
                     Call Now
