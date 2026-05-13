@@ -125,9 +125,10 @@ return [
         ],
 
         'exotel' => [
-            'driver' => 'single',
+            'driver' => 'daily',
             'path' => storage_path('logs/exotel.log'),
             'level' => env('LOG_EXOTEL_LEVEL', env('LOG_LEVEL', 'debug')),
+            'days' => 0,
         ],
     ],
 
