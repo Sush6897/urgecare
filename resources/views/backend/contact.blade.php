@@ -33,7 +33,7 @@
                                 <label>&nbsp;</label>
                                 <div>
                                     <button type="submit" class="btn btn-primary btn-block"><i class="fe fe-search"></i> Search </button>
-                                    <a href="{{ route('contact.create') }}" class="btn btn-secondary btn-block">Reset</a>
+                                    <a href="{{ route('contact.create') }}" class="btn btn-danger btn-block">Reset</a>
                                 </div>
                             </div>
                         </div>

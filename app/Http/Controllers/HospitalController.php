@@ -258,6 +258,19 @@ class HospitalController extends Controller
         return response()->json(['success' => true, 'message' => 'Bulk status updated successfully.']);
     }
 
+    public function bulkRestore(Request $request)
+    {
+        $ids = $request->ids;
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json(['success' => false, 'message' => 'No hospitals selected.']);
+        }
+
+        Hospital::onlyTrashed()->whereIn('id', $ids)->restore();
+
+        return response()->json(['success' => true, 'message' => 'Selected hospitals restored successfully.']);
+    }
+
     public function fetchCoordinates(Request $request)
     {
         $url = $request->gmap;

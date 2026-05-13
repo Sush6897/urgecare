@@ -71,6 +71,7 @@ Route::resource('setting', SettingController::class)->only(['index', 'create', '
 Route::get('/hospitals/trash', [HospitalController::class, 'trash'])->middleware('auth')->name('hospital.trash');
 Route::post('/hospitals/restore/{id}', [HospitalController::class, 'restore'])->middleware('auth')->name('hospital.restore');
 Route::post('/hospitals/bulk-status', [HospitalController::class, 'bulkStatusUpdate'])->middleware('auth')->name('hospital.bulk-status');
+Route::post('/hospitals/bulk-restore', [HospitalController::class, 'bulkRestore'])->middleware('auth')->name('hospital.bulk-restore');
 Route::get('/fetch-coordinates', [HospitalController::class, 'fetchCoordinates'])->name('fetchCoordinates');
 Route::get('/contact-us', [FrontendController::class, 'contactus']);
 Route::post('/partners', [PartnerController::class, 'store'])->name('partners.store');

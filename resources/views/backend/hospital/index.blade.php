@@ -10,7 +10,7 @@
                 <h3 class="page-title">Hospitals</h3>
             </div>
             <div class="col-sm-6 text-right">
-                <a href="{{ route('hospital.trash') }}" class="btn btn-warning"><i class="fe fe-trash"></i> Trash</a>
+                <a href="{{ route('hospital.trash') }}" class="btn btn-danger"><i class="fe fe-trash"></i> Trash</a>
                 <a href="{{ route('hospital.create') }}" class="btn btn-primary"><i class="fe fe-plus"></i> Add Hospital</a>
             </div>
         </div>
@@ -55,12 +55,33 @@
                                 <label>&nbsp;</label>
                                 <div>
                                     <button type="submit" class="btn btn-primary btn-block"><i class="fe fe-search"></i> Search </button>
-                                    <a href="{{ route('hospital.index') }}" class="btn btn-secondary btn-block">Reset</a>
+                                    <a href="{{ route('hospital.index') }}" class="btn btn-danger btn-block">Reset</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="bulk_actions_container" style="display: none; margin-bottom: 15px;">
+    <div class="col-sm-12">
+        <div class="card bg-light border-primary mb-0">
+            <div class="card-body py-2 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="badge badge-primary px-3 py-2" id="selected_count_badge">0 selected</span>
+                    <span class="ml-2 font-weight-bold text-primary">Bulk Actions:</span>
+                </div>
+                <div class="d-flex" style="gap: 10px;">
+                    <button type="button" class="btn btn-sm btn-success bulk-status-btn" data-status="active">
+                        <i class="fe fe-check-circle"></i> Mark Active
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger bulk-status-btn" data-status="inactive">
+                        <i class="fe fe-x-circle"></i> Mark Inactive
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -165,59 +186,38 @@
     </div>
 </div>
 
-{{-- Bulk Status Modal (checkbox-triggered) --}}
-<div class="modal fade" id="bulkStatusModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+{{-- Bulk Status Confirmation Modal --}}
+<div class="modal fade" id="bulkConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="fe fe-layers mr-1"></i> Update Hospital Status
+            <div class="modal-header" id="bulkConfirmHeader">
+                <h5 class="modal-title text-white">
+                    <i class="fe fe-refresh-cw mr-1"></i> Confirm Bulk Action
                 </h5>
-                <button type="button" class="close text-white" onclick="location.reload();" aria-label="Close">
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body text-center py-4">
-                <i class="fe fe-check-square" style="font-size: 44px; color: #007bff;"></i>
-                <h5 class="mt-3 mb-1">Change Status</h5>
-                <p class="text-muted" id="bulkSelectedCount"></p>
-                <p class="mb-3">What status do you want to apply to the selected hospitals?</p>
-                <div class="d-flex justify-content-center" style="gap: 12px;">
-                    <button type="button" class="btn btn-success px-4" id="setActiveBtn">
-                        <i class="fe fe-check-circle mr-1"></i> Mark as Active
-                    </button>
-                    <button type="button" class="btn btn-danger px-4" id="setInactiveBtn">
-                        <i class="fe fe-x-circle mr-1"></i> Mark as Inactive
-                    </button>
-                </div>
+                <i id="bulkConfirmIcon" style="font-size: 48px;"></i>
+                <h5 class="mt-3" id="bulkConfirmTitle"></h5>
+                <p class="text-muted" id="bulkConfirmMessage"></p>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary" onclick="location.reload();">
-                    <i class="fe fe-x"></i> Cancel
-                </button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn" id="executeBulkBtn">Yes, Proceed</button>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Toast Notification --}}
-<div id="toastNotification" style="
-    position: fixed; top: 20px; right: 20px; z-index: 9999;
-    min-width: 280px; display: none;
-    background: #fff; border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    border-left: 4px solid #28a745; padding: 16px 20px;
-">
-    <div class="d-flex align-items-center">
-        <i id="toastIcon" class="fe fe-check-circle mr-2" style="font-size: 20px; color: #28a745;"></i>
-        <span id="toastMessage" class="font-weight-bold"></span>
-    </div>
-</div>
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
     var $deleteForm = null;
+    var selectedStatus = null;
 
     // ── Delete Modal ──────────────────────────────────────────
     $(document).on('click', '.delete-btn', function() {
@@ -230,62 +230,70 @@ $(document).ready(function() {
         $('#deleteHospitalModal').modal('hide');
         if ($deleteForm) $deleteForm.submit();
     });
-    // ─────────────────────────────────────────────────────────
 
     // ── Select All ───────────────────────────────────────────
     $('#select_all').on('click', function() {
         $('.hospital_checkbox').prop('checked', this.checked);
-        syncSelectAll();
-        if (this.checked) openBulkModal();
+        toggleBulkActions();
     });
 
-    // ── Individual Checkbox → open modal immediately ─────────
+    // ── Individual Checkbox ─────────────────────────────────
     $(document).on('change', '.hospital_checkbox', function() {
-        syncSelectAll();
-        if ($('.hospital_checkbox:checked').length > 0) {
-            openBulkModal();
-        }
-    });
-
-    // Modal is static, cancel reloads the page.
-
-    function openBulkModal() {
-        var count = $('.hospital_checkbox:checked').length;
-        $('#bulkSelectedCount').text(count + ' hospital(s) selected');
-        $('#bulkStatusModal').modal('show');
-    }
-
-    function syncSelectAll() {
-        var total   = $('.hospital_checkbox').length;
+        var total = $('.hospital_checkbox').length;
         var checked = $('.hospital_checkbox:checked').length;
         $('#select_all').prop('checked', total > 0 && total === checked);
+        toggleBulkActions();
+    });
+
+    function toggleBulkActions() {
+        var count = $('.hospital_checkbox:checked').length;
+        if (count > 0) {
+            $('#selected_count_badge').text(count + ' selected');
+            $('#bulk_actions_container').fadeIn(200);
+        } else {
+            $('#bulk_actions_container').fadeOut(200);
+        }
     }
 
-    // ── Active / Inactive buttons inside modal ────────────────
-    $('#setActiveBtn').on('click', function() {
-        sendBulkStatus('active');
-    });
-    $('#setInactiveBtn').on('click', function() {
-        sendBulkStatus('inactive');
+    // ── Bulk Status Buttons ──────────────────────────────────
+    $('.bulk-status-btn').on('click', function() {
+        selectedStatus = $(this).data('status');
+        var count = $('.hospital_checkbox:checked').length;
+        
+        // Prepare Modal Content
+        if (selectedStatus === 'active') {
+            $('#bulkConfirmHeader').attr('class', 'modal-header bg-success');
+            $('#bulkConfirmIcon').attr('class', 'fe fe-check-circle text-success');
+            $('#bulkConfirmTitle').text('Set as Active');
+            $('#bulkConfirmMessage').text('Are you sure you want to activate ' + count + ' selected hospital(s)?');
+            $('#executeBulkBtn').attr('class', 'btn btn-success').text('Activate');
+        } else {
+            $('#bulkConfirmHeader').attr('class', 'modal-header bg-danger');
+            $('#bulkConfirmIcon').attr('class', 'fe fe-x-circle text-danger');
+            $('#bulkConfirmTitle').text('Set as Inactive');
+            $('#bulkConfirmMessage').text('Are you sure you want to deactivate ' + count + ' selected hospital(s)?');
+            $('#executeBulkBtn').attr('class', 'btn btn-danger').text('Deactivate');
+        }
+        
+        $('#bulkConfirmModal').modal('show');
     });
 
-    function sendBulkStatus(status) {
+    $('#executeBulkBtn').on('click', function() {
         var ids = [];
         $('.hospital_checkbox:checked').each(function() {
             ids.push($(this).val());
         });
 
-        if (ids.length === 0) {
-            showToast('Please select at least one hospital.', 'warning');
-            return;
-        }
-
-        $('#bulkStatusModal').modal('hide');
-
+        $('#bulkConfirmModal').modal('hide');
+        
         $.ajax({
             url: "{{ route('hospital.bulk-status') }}",
             type: 'POST',
-            data: { ids: ids, status: status, _token: "{{ csrf_token() }}" },
+            data: { 
+                ids: ids, 
+                status: selectedStatus, 
+                _token: "{{ csrf_token() }}" 
+            },
             success: function(response) {
                 if (response.success) {
                     showToast(response.message, 'success');
@@ -298,27 +306,34 @@ $(document).ready(function() {
                 showToast('Something went wrong! Please try again.', 'danger');
             }
         });
-    }
+    });
 
     // ── Toast ─────────────────────────────────────────────────
     function showToast(message, type) {
-        var colors = { success: '#28a745', danger: '#dc3545', warning: '#ffc107' };
-        var icons  = { success: 'fe-check-circle', danger: 'fe-x-circle', warning: 'fe-alert-triangle' };
-        var color  = colors[type] || '#333';
-        var icon   = icons[type]  || 'fe-info';
-        $('#toastNotification').css('border-left-color', color).fadeIn(300);
-        $('#toastIcon').attr('class', 'fe ' + icon + ' mr-2').css('color', color);
-        $('#toastMessage').text(message);
-        setTimeout(function() { $('#toastNotification').fadeOut(400); }, 3000);
+        if (type === 'success') {
+            iziToast.success({
+                title: 'Success',
+                message: message,
+                position: 'topRight',
+                backgroundColor: '#40a7a3',
+                titleColor: 'white',
+                messageColor: 'white',
+                icon: 'mdi mdi-check',
+                iconColor: 'white',
+            });
+        } else {
+            iziToast.error({
+                title: 'Error',
+                message: message,
+                position: 'topRight',
+                backgroundColor: '#f70400',
+                titleColor: 'white',
+                messageColor: 'white',
+                icon: 'mdi mdi-close',
+                iconColor: 'white',
+            });
+        }
     }
-
-    // ── Auto-toast on page load for session flash messages ────
-    @if(session('success'))
-        showToast("{{ session('success') }}", 'success');
-    @endif
-    @if(session('error'))
-        showToast("{{ session('error') }}", 'danger');
-    @endif
 });
 </script>
 @endsection
