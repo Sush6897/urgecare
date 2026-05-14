@@ -61,12 +61,17 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                    <h5 class="modal-title " id="bookNowModalLabel">You will get a call back In one second</h5>
+                        <h5 class="modal-title" id="bookNowModalLabel">You will get a call back In one second</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
+                        <div id="modal-price-container" class="mb-3 text-center" style="display: none;">
+                            <span class="badge badge-success px-3 py-2" style="font-size: 1.1rem;">
+                                <i class="fas fa-tag mr-1"></i> Price: ₹<span id="modal-hospital-price"></span>
+                            </span>
+                        </div>
                         <form method="post" action="{{route('call')}}">
                             @csrf
                             <input type="hidden" class="form-control" id="hospital_id" name="hospital_id" value="" placeholder="Enter patient name">
@@ -244,13 +249,24 @@
         if ($('.hospital-item').length < 3) {
             $('#load-more-btn').hide();
         }
+
+        // Handle Book Now Modal Data
+        $('#bookNowModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var hospitalId = button.data('hospital-id');
+            var hospitalPrice = button.data('hospital-price');
+            
+            var modal = $(this);
+            modal.find('#hospital_id').val(hospitalId);
+            
+            if (hospitalPrice) {
+                modal.find('#modal-hospital-price').text(hospitalPrice);
+                modal.find('#modal-price-container').show();
+            } else {
+                modal.find('#modal-price-container').hide();
+            }
+        });
     });
-
-
-     
-
-        
-    
 </script>
 
 @endsection

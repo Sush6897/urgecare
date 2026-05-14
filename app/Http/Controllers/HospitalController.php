@@ -69,6 +69,7 @@ class HospitalController extends Controller
 
             'type' => 'required|array',
             'type.*' => 'in:emergency,non-emergency',
+            'price' => 'nullable|numeric',
         ], [
             'contacts.required' => 'At least one contact is required.',
         ]);
@@ -98,6 +99,7 @@ class HospitalController extends Controller
 
             'emergency' => $emergency,
             'nonemergency' => $nonemergency,
+            'price' => $request->price,
             'contact' => $validatedData['contacts'][0] ?? null, // Primary contact
         ]);
 
@@ -150,6 +152,7 @@ class HospitalController extends Controller
             'status' => 'required|in:active,inactive',
             'type' => 'required|array',
             'type.*' => 'in:emergency,non-emergency',
+            'price' => 'nullable|numeric',
         ]);
 
         // Find hospital
@@ -178,6 +181,7 @@ class HospitalController extends Controller
             'status' => $validatedData['status'],
             'emergency' => $emergency,
             'nonemergency' => $nonemergency,
+            'price' => $request->price,
             'contact' => $validatedData['contacts'][0] ?? null, // Primary contact
         ];
 

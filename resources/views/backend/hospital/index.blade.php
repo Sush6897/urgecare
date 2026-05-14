@@ -101,6 +101,7 @@
                                 <th>Address</th>
                                 <th>City</th>
                                 <th>Type</th>
+                                <th>Price</th>
                                 <th>Area</th>
                                 <th>Status</th>
                                 <th>Created</th>
@@ -128,6 +129,13 @@
                                         @endif
                                         @if($hospital->nonemergency)
                                             <span class="badge badge-info">Non-Emergency</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($hospital->price)
+                                            ₹{{ number_format($hospital->price, 2) }}
+                                        @else
+                                            -
                                         @endif
                                     </td>
                                     <td>{{ $hospital->area}}</td>

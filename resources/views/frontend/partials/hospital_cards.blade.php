@@ -24,7 +24,7 @@
             </ul>
             <div class="controls">
              
-                <button class="button call hidden-text" data-toggle="modal" data-target="#bookNowModal" data-hospital-id="{{$hos->id}}">
+                <button class="button call hidden-text" data-toggle="modal" data-target="#bookNowModal" data-hospital-id="{{$hos->id}}" data-hospital-price="{{ $hos->price ? number_format($hos->price, 2) : '' }}">
                     <span class="button-text">Book Now</span>
                     <span class="button-icon-only" data-hospital-id="{{$hos->id}}"> Book Now</span>
                 </button>

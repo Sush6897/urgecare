@@ -136,6 +136,7 @@ class HospitalAuthController extends Controller
             'features' => [new AtLeastThreeFeatures()],
             'type' => 'required|array',
             'type.*' => 'in:emergency,non-emergency',
+            'price' => 'nullable|numeric',
         ], [
             'features' => 'At least three features are required.',
             'contacts' => 'At least one contact is required.',
@@ -162,6 +163,7 @@ class HospitalAuthController extends Controller
             'features4'     => $request->features['features4'] ?? null,
             'emergency'     => $emergency,
             'nonemergency'  => $nonemergency,
+            'price'         => $request->price,
             'contact'       => $request->contacts[0] ?? null, // Sync primary contact
         ]);
 

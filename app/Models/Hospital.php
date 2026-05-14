@@ -29,7 +29,8 @@ class Hospital extends Authenticatable
         'latitude',
         'status',
         'emergency',
-        'nonemergency'
+        'nonemergency',
+        'price'
     ];
 
     protected $hidden = [

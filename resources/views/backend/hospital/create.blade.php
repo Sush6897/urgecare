@@ -152,6 +152,13 @@
                         @enderror
                     </div>
                     <div class="form-group col-md-6">
+                        <label for="price">Price</label>
+                        <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ old('price') }}" placeholder="Enter Price">
+                        @error('price')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="form-group col-md-6">
                         <label for="status">Status</label>
                         <select class="form-control" id="status" name="status" required>
                             <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>

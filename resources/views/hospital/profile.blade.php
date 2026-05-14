@@ -167,6 +167,17 @@
                                 <p class="col-sm-9">{{auth('hospital')->user()->pincode}}</p>
                             </div>
 
+                            <div class="row">
+                                <p class="col-sm-3 text-muted text-sm-right">Price</p>
+                                <p class="col-sm-9">
+                                    @if(auth('hospital')->user()->price)
+                                        ₹{{ number_format(auth('hospital')->user()->price, 2) }}
+                                    @else
+                                        -
+                                    @endif
+                                </p>
+                            </div>
+
 
                             <!-- Type -->
 
@@ -446,6 +457,14 @@
                                 </div>
                                 @error('type')
                                     <div class="text-danger small">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label>Price</label>
+                                <input type="number" step="0.01" name="price" class="form-control @error('price') is-invalid @enderror" value="{{ old('price', $hospital->price) }}" placeholder="Enter Price">
+                                @error('price')
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
