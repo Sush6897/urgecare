@@ -638,7 +638,9 @@ BACKUP: ORIGINAL SLOW IMPLEMENTATION (Multiple Google Geocoding calls)
         $request->validate([
             'hospital_id' => "required",
             'patient_name' => 'required|string|max:255',
-            'contact' => 'required|digits_between:10,15|numeric'
+            'contact' => 'required|digits_between:10,15|numeric',
+            'latitude' => 'nullable|string|max:32',
+            'longitude' => 'nullable|string|max:32',
         ]);
         $hospital = Hospital::where('status', 'active')->with(['contacts' => fn($q) => $q->orderBy('id')])->findOrFail($request->hospital_id);
 
@@ -648,12 +650,17 @@ BACKUP: ORIGINAL SLOW IMPLEMENTATION (Multiple Google Geocoding calls)
             return back()->with('error', 'No contact numbers found');
         }
 
+        $lat = $request->latitude ?? session('latitude');
+        $lng = $request->longitude ?? session('longitude');
+
         try {
             $callLog = $exotel->createLogAndStartDial(
                 (string) $request->contact,
                 $numbers,
                 $request->patient_name,
-                (int) $hospital->id
+                (int) $hospital->id,
+                $lat ? (string) $lat : null,
+                $lng ? (string) $lng : null
             );
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());

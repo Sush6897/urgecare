@@ -35,15 +35,15 @@ class ExotelService
     private const NON_TERMINAL = ['queued', 'ringing', 'in-progress', 'initiated', ''];
 
     public function __construct(
-        protected ?string $accountSid = 'uc1641',
-        protected ?string $apiKey = "9ecda612ebfeb89f36a712e6c39b769075e739004bb18092",
-        protected ?string $apiToken = "3a2d575d67a561f0ffe8aa5e62e5f9aecf8117adb5009a7e",
-        protected ?string $callerId = "02048556108",
+        protected ?string $accountSid = null,
+        protected ?string $apiKey = null,
+        protected ?string $apiToken = null,
+        protected ?string $callerId = null,
     ) {
-        $this->accountSid = $accountSid ?? (string) config('services.exotel.account_sid');
-        $this->apiKey = $apiKey ?? (string) config('services.exotel.api_key');
-        $this->apiToken = $apiToken ?? (string) config('services.exotel.api_token');
-        $this->callerId = $callerId ?? (string) config('services.exotel.caller_id');
+        $this->accountSid = $accountSid ?: (string) config('services.exotel.account_sid');
+        $this->apiKey = $apiKey ?: (string) config('services.exotel.api_key');
+        $this->apiToken = $apiToken ?: (string) config('services.exotel.api_token');
+        $this->callerId = $callerId ?: (string) config('services.exotel.caller_id');
     }
 
     /**
@@ -55,7 +55,9 @@ class ExotelService
         string $from,
         array $numbers,
         ?string $patientName = null,
-        ?int $hospitalId = null
+        ?int $hospitalId = null,
+        ?string $latitude = null,
+        ?string $longitude = null
     ): CallLog {
         $numbers = array_values(array_unique(array_filter(array_map('trim', $numbers))));
         if ($numbers === []) {
@@ -71,6 +73,8 @@ class ExotelService
             'attempts' => [],
             'patient_name' => $patientName,
             'hospital_id' => $hospitalId,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
         ]);
 
         $sid = $this->placeCall($callLog, 0);
@@ -309,7 +313,10 @@ class ExotelService
 
             $this->recordEnquiry($callLog, $callSid, 'completed');
 
-            $this->sendPostCallSms($callLog, $dialedTo);
+            // Send all 3 post-call SMS notifications
+            $this->sendPostCallPatientSms($callLog);
+            $this->sendPostCallUrgecareAdminSms($callLog);
+            $this->sendPostCallAmbulanceProviderSms($callLog, $dialedTo);
 
             return;
         }
@@ -359,8 +366,10 @@ class ExotelService
             'attempts' => $attempts,
         ]);
 
-        // Send Missed Call ALERT to fallback number 7888021021 (as per previous logic)
-        $this->sendPostCallSms($callLog, '917888021021');
+        // Send post-call SMS notifications on call exhaustion/failure as well
+        $this->sendPostCallPatientSms($callLog);
+        $this->sendPostCallUrgecareAdminSms($callLog);
+        $this->sendPostCallAmbulanceProviderSms($callLog, $dialedTo ?? ($numbers[0] ?? '917888021021'));
     }
 
     private function isNonTerminal(string $status): bool
@@ -416,57 +425,193 @@ class ExotelService
         }
     }
 
-    private function sendPostCallSms(CallLog $callLog, ?string $to): void
+    /**
+     * Send SMS via Exotel SMS API and log into storage/logs/sms.log & exotel.log.
+     *
+     * @return array{ok: bool, response?: mixed, error?: string}
+     */
+    public function sendSms(
+        string $to,
+        string $templateId,
+        string $header,
+        string $body,
+        ?string $messageType = null,
+        ?int $callLogId = null
+    ): array {
+        if ($this->accountSid === '' || $this->apiKey === '' || $this->apiToken === '') {
+            $err = 'Exotel SMS credentials not configured.';
+            $this->smsLog()->error($err, compact('to', 'templateId', 'header', 'messageType', 'callLogId'));
+
+            return ['ok' => false, 'error' => $err];
+        }
+
+        $cleanTo = ltrim(preg_replace('/\D/', '', $to), '0');
+        if (strlen($cleanTo) === 10) {
+            $cleanTo = $cleanTo;
+        }
+
+        $url = "https://api.exotel.com/v1/Accounts/{$this->accountSid}/Sms/send.json";
+
+        $payload = [
+            'From' => $header,
+            'To' => $cleanTo,
+            'Body' => $body,
+            'DltTemplateId' => $templateId,
+            'DltEntityId' => '1701164398108412688',
+            'SmsType' => 'transactional',
+        ];
+
+        try {
+            $response = Http::withBasicAuth($this->apiKey, $this->apiToken)
+                ->asForm()
+                ->post($url, $payload);
+
+            $responseData = $response->json();
+            $isSuccess = $response->successful();
+
+            $logData = [
+                'call_log_id' => $callLogId,
+                'message_type' => $messageType,
+                'header' => $header,
+                'template_id' => $templateId,
+                'to' => $cleanTo,
+                'body' => $body,
+                'status' => $isSuccess ? 'SUCCESS' : 'FAILED',
+                'http_code' => $response->status(),
+                'response' => $responseData ?? $response->body(),
+                'timestamp' => now()->toIso8601String(),
+            ];
+
+            if ($isSuccess) {
+                $this->smsLog()->info("SMS Sent [{$messageType}] to {$cleanTo}", $logData);
+                $this->exotelLog()->info("SMS Sent [{$messageType}] to {$cleanTo}", $logData);
+
+                return ['ok' => true, 'response' => $responseData];
+            } else {
+                $this->smsLog()->error("SMS Failed [{$messageType}] to {$cleanTo}", $logData);
+                $this->exotelLog()->error("SMS Failed [{$messageType}] to {$cleanTo}", $logData);
+
+                return ['ok' => false, 'error' => $response->body(), 'response' => $responseData];
+            }
+        } catch (\Exception $e) {
+            $logData = [
+                'call_log_id' => $callLogId,
+                'message_type' => $messageType,
+                'header' => $header,
+                'template_id' => $templateId,
+                'to' => $cleanTo,
+                'body' => $body,
+                'status' => 'EXCEPTION',
+                'error' => $e->getMessage(),
+                'timestamp' => now()->toIso8601String(),
+            ];
+
+            $this->smsLog()->error("SMS Exception [{$messageType}] to {$cleanTo}: " . $e->getMessage(), $logData);
+            $this->exotelLog()->error("SMS Exception [{$messageType}] to {$cleanTo}: " . $e->getMessage(), $logData);
+
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Message 1: Message to URGECARE- TO ME (Template Id: 1707177364516989149, Header: URGKER)
+     * DLT Pattern: You just spoke with {#var#}{#var#}for{#var#} ambulance help .for more assistance call Team Urge care {#var#}
+     * 1st var - Name
+     * 2nd var - Number (patient)
+     * 3rd var - Hospital name
+     * 4th var - 8788934087
+     */
+    public function sendPostCallUrgecareAdminSms(CallLog $callLog): void
     {
-        if (!$to) {
+        $var1 = $callLog->patient_name ? trim($callLog->patient_name) . ' ' : '';
+        $var2 = trim($callLog->from_number) . ' ';
+        $hospital = Hospital::find($callLog->hospital_id);
+        $hospitalName = $hospital ? $hospital->hospital_name : 'Hospital';
+        $var3 = ' ' . trim($hospitalName);
+        $var4 = '8788934087';
+
+        $body = "You just spoke with {$var1}{$var2}for{$var3} ambulance help .for more assistance call Team Urge care {$var4}";
+
+        $adminNumbers = ['8788934087', '7888021021'];
+        foreach ($adminNumbers as $number) {
+            $this->sendSms(
+                $number,
+                '1707177364516989149',
+                'URGKER',
+                $body,
+                'URGECARE_ADMIN_POST_CALL',
+                $callLog->id
+            );
+        }
+    }
+
+    /**
+     * Message 2: Message to Patient (Template Id: 1707177738048468288, Header: URGKER)
+     * DLT Pattern: Thanks for Contacting Urgecare Ambulance Services.Pls share your location on whats app No. {#var#} for further assitance .Team Urgecare ,Helpline No .{#var#}{#var#}
+     * 1st var - 7888021021
+     * 2nd var - 7888021021
+     * 3rd var - https://urgecare.in/
+     */
+    public function sendPostCallPatientSms(CallLog $callLog): void
+    {
+        if (! $callLog->from_number) {
             return;
         }
 
+        $var1 = '7888021021';
+        $var2 = '7888021021 ';
+        $var3 = 'https://urgecare.in/';
+
+        $body = "Thanks for Contacting Urgecare Ambulance Services.Pls share your location on whats app No. {$var1} for further assitance .Team Urgecare ,Helpline No .{$var2}{$var3}";
+
+        $this->sendSms(
+            $callLog->from_number,
+            '1707177738048468288',
+            'URGKER',
+            $body,
+            'PATIENT_POST_CALL',
+            $callLog->id
+        );
+    }
+
+    /**
+     * Message 3: Message to call receiver - Ambulance service Provider (Template Id: 1707168475359519031, Header: URGKER)
+     * DLT Pattern: You just spoke with {#var#} for ambulance help. For more assistance call {#var#} Team –Urgecare
+     * 1st var - Patient number
+     * 2nd var - Patient Location (includes Google Maps URL if lat/lng available)
+     */
+    public function sendPostCallAmbulanceProviderSms(CallLog $callLog, ?string $to): void
+    {
+        if (! $to) {
+            return;
+        }
+
+        $patientNumber = trim($callLog->from_number);
         $hospital = Hospital::find($callLog->hospital_id);
-        $hospitalName = $hospital ? $hospital->hospital_name : 'Hospital';
-        $patientName = $callLog->patient_name ?? 'Patient';
-        $patientContact = $callLog->from_number ?? '';
-        $helpline = '8149801662';
+        $locationText = $hospital ? ($hospital->area ?: $hospital->city) : '';
 
-        // Normalize phone number for SMS
-        $cleanTo = ltrim(preg_replace('/\D/', '', $to), '0');
-        if (strlen($cleanTo) === 10) {
-            $cleanTo = '91' . $cleanTo;
+        if ($callLog->latitude && $callLog->longitude) {
+            $googleMapsUrl = "https://maps.google.com/?q={$callLog->latitude},{$callLog->longitude}";
+            $patientLocation = $locationText ? "{$locationText} {$googleMapsUrl}" : $googleMapsUrl;
+        } else {
+            $patientLocation = $locationText ?: '7888021021';
         }
 
-        $body = "You just spoke with {$patientName} {$patientContact} for {$hospitalName} ambulance help. For more assistance call Team Urge Care {$helpline}";
+        $body = "You just spoke with {$patientNumber} for ambulance help. For more assistance call {$patientLocation} Team –Urgecare";
 
-        try {
-            $url = "https://api.exotel.com/v1/Accounts/{$this->accountSid}/Sms/send.json";
+        $this->sendSms(
+            $to,
+            '1707168475359519031',
+            'URGKER',
+            $body,
+            'PROVIDER_POST_CALL',
+            $callLog->id
+        );
+    }
 
-            $response = Http::withBasicAuth($this->apiKey, $this->apiToken)
-                ->asForm()
-                ->post($url, [
-                    'From' => 'URGKER',
-                    'To' => $cleanTo,
-                    'Body' => $body,
-                    'DltTemplateId' => '1707177364516989149',
-                    'DltEntityId' => '1701164398108412688',
-                    'SmsType' => 'transactional',
-                ]);
-
-            if ($response->successful()) {
-                $this->exotelLog()->info("Post-call SMS sent to {$cleanTo}", [
-                    'call_log_id' => $callLog->id,
-                    'response' => $response->json()
-                ]);
-            } else {
-                $this->exotelLog()->error("Failed to send post-call SMS to {$cleanTo}", [
-                    'call_log_id' => $callLog->id,
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-            }
-        } catch (\Exception $e) {
-            $this->exotelLog()->error("Post-call SMS Exception: " . $e->getMessage(), [
-                'call_log_id' => $callLog->id
-            ]);
-        }
+    private function smsLog(): LoggerInterface
+    {
+        return Log::channel('sms');
     }
 
     private function exotelLog(): LoggerInterface

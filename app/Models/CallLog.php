@@ -23,6 +23,8 @@ class CallLog extends Model
         'attempts',
         'hospital_id',
         'patient_name',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [

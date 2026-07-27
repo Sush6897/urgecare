@@ -32,13 +32,17 @@ class ExotelController extends Controller
             'numbers.*' => 'required|string|max:32',
             'patient_name' => 'sometimes|nullable|string|max:255',
             'hospital_id' => 'sometimes|nullable|integer|exists:hospitals,id',
+            'latitude' => 'sometimes|nullable|string|max:32',
+            'longitude' => 'sometimes|nullable|string|max:32',
         ]);
 
         $callLog = $this->exotel->createLogAndStartDial(
             $validated['from'],
             $validated['numbers'],
             $validated['patient_name'] ?? null,
-            isset($validated['hospital_id']) ? (int) $validated['hospital_id'] : null
+            isset($validated['hospital_id']) ? (int) $validated['hospital_id'] : null,
+            $validated['latitude'] ?? null,
+            $validated['longitude'] ?? null
         );
 
         return response()->json([

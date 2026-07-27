@@ -144,9 +144,11 @@
                                 <i class="fas fa-tag mr-1"></i> Price: ₹<span id="modal-hospital-price"></span>
                             </span>
                         </div>
-                        <form method="post" action="{{route('call')}}">
+                        <form method="post" action="{{url('call')}}">
                             @csrf
                             <input type="hidden" class="form-control" id="hospital_id" name="hospital_id" value="" placeholder="Enter patient name">
+                            <input type="hidden" id="modal_latitude" name="latitude" value="">
+                            <input type="hidden" id="modal_longitude" name="longitude" value="">
                             <div class="form-group">
                                 <label for="patientName">Patient Name</label>
                                 <input type="text" class="form-control" id="patientName" name="patient_name" placeholder="Enter patient name" required>
@@ -308,6 +310,11 @@
             var hospitalId = $(this).data('hospital-id');
             var hospitalPrice = $(this).data('hospital-price');
             $('#hospital_id').val(hospitalId);
+
+            var lat = new URLSearchParams(window.location.search).get('latitude') || localStorage.getItem('latitude');
+            var lng = new URLSearchParams(window.location.search).get('longitude') || localStorage.getItem('longitude');
+            if (lat) $('#modal_latitude').val(lat);
+            if (lng) $('#modal_longitude').val(lng);
 
             if (hospitalPrice) {
                 $('#modal-hospital-price').text(hospitalPrice);
