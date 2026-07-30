@@ -35,15 +35,15 @@ class ExotelService
     private const NON_TERMINAL = ['queued', 'ringing', 'in-progress', 'initiated', ''];
 
     public function __construct(
-        protected ?string $accountSid = null,
-        protected ?string $apiKey = null,
-        protected ?string $apiToken = null,
-        protected ?string $callerId = null,
+        protected ?string $accountSid = 'uc1641',
+        protected ?string $apiKey = "9ecda612ebfeb89f36a712e6c39b769075e739004bb18092",
+        protected ?string $apiToken = "3a2d575d67a561f0ffe8aa5e62e5f9aecf8117adb5009a7e",
+        protected ?string $callerId = "02048556108",
     ) {
-        $this->accountSid = $accountSid ?: (string) config('services.exotel.account_sid');
-        $this->apiKey = $apiKey ?: (string) config('services.exotel.api_key');
-        $this->apiToken = $apiToken ?: (string) config('services.exotel.api_token');
-        $this->callerId = $callerId ?: (string) config('services.exotel.caller_id');
+        $this->accountSid = $accountSid ?? (string) config('services.exotel.account_sid');
+        $this->apiKey = $apiKey ?? (string) config('services.exotel.api_key');
+        $this->apiToken = $apiToken ?? (string) config('services.exotel.api_token');
+        $this->callerId = $callerId ?? (string) config('services.exotel.caller_id');
     }
 
     /**
