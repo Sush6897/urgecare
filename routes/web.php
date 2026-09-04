@@ -14,6 +14,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ZohoController;
 use App\Http\Controllers\UserVisitController;
 use App\Http\Controllers\FaqController;
+use App\Http\Controllers\PatientLocationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +26,10 @@ use App\Http\Controllers\FaqController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+// Patient Live Location Tracking Routes (Public Auto-Ping)
+Route::post('/patient-location/start', [PatientLocationController::class, 'startSession'])->name('patient.location.start');
+Route::post('/patient-location/update', [PatientLocationController::class, 'updateLocation'])->name('patient.location.update');
 
 Route::get('/', [FrontendController::class, 'index'])->name('home');
 Route::get('/landing', [FrontendController::class, 'landing'])->name('landing');
@@ -66,6 +71,9 @@ Route::post('/hospital/password/reset', [HospitalAuthController::class, 'reset']
 Route::resource('hospital', HospitalController::class)->middleware('auth');
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('faq', FaqController::class);
+    Route::get('/patient-tracking', [PatientLocationController::class, 'adminIndex'])->name('patient-tracking');
+    Route::get('/patient-tracking/api/active', [PatientLocationController::class, 'getActiveSessions'])->name('patient-tracking.api.active');
+    Route::get('/patient-tracking/api/session/{id}', [PatientLocationController::class, 'getSessionTrack'])->name('patient-tracking.api.session');
 });
 Route::resource('setting', SettingController::class)->only(['index', 'create', 'store'])->middleware('auth');
 Route::get('/hospitals/trash', [HospitalController::class, 'trash'])->middleware('auth')->name('hospital.trash');

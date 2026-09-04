@@ -23,6 +23,9 @@
             <li class="{{ Request::is('user-visits*') ? 'active' : '' }}">
               <a href="{{Route('user-visits.index')}}"><i class="fe fe-users"></i> <span>User Visits</span></a>
             </li>
+            <li class="{{ Request::is('admin/patient-tracking*') ? 'active' : '' }}">
+              <a href="{{Route('admin.patient-tracking')}}"><i class="fe fe-map-pin"></i> <span>Patient Tracking</span></a>
+            </li>
             <li class="{{ Request::is('admin/faq*') ? 'active' : '' }}">
               <a href="{{Route('admin.faq.index')}}"><i class="fe fe-question"></i> <span>FAQ</span></a>
             </li>
