@@ -91,6 +91,10 @@
             navigator.geolocation.getCurrentPosition(function(position) {
                 var latitude = position.coords.latitude;
                 var longitude = position.coords.longitude;
+                // Start 1-hour live patient tracking session
+                if (window.startPatientTracking) {
+                    window.startPatientTracking(latitude, longitude);
+                }
                 // Set latitude and longitude values to the form inputs
                 $('#location-form' + ' input[name="latitude"]').val(latitude);
                 $('#location-form' + ' input[name="longitude"]').val(longitude);
@@ -196,7 +200,199 @@
     });
     </script>
 
-</body>
+    <!-- Patient Live Location Tracking Widget & Engine (1-Hour Auto Window) -->
+    <div id="patient-location-widget" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 99999; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); color: #fff; border-radius: 12px; padding: 12px 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); font-family: sans-serif; font-size: 13px; border: 1px solid rgba(255,255,255,0.15); transition: all 0.3s ease;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="pts-pulse-dot" style="width: 10px; height: 10px; background-color: #10B981; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #10B981; animation: ptsPulse 1.5s infinite;"></span>
+            <div>
+                <div style="font-weight: 600; color: #F8FAFC; display: flex; align-items: center; gap: 8px;">
+                    <span>Live Location Sharing</span>
+                    <span id="pts-status-badge" style="background: rgba(16, 185, 129, 0.2); color: #34D399; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500;">Stopped</span>
+                </div>
+                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">
+                    Time Remaining: <span id="pts-timer" style="color: #60A5FA; font-weight: 600;">59m 59s</span> | <span id="pts-speed">0.0 km/h</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <style>
+        @keyframes ptsPulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+
+    <script>
+    (function() {
+        var trackingInterval = null;
+        var watchId = null;
+        var timerCountdownInterval = null;
+        var expiresAtTimestamp = 0;
+
+        function updateWidgetTimer() {
+            if (!expiresAtTimestamp) return;
+            var now = new Date().getTime();
+            var remainingMs = expiresAtTimestamp - now;
+
+            if (remainingMs <= 0) {
+                stopTrackingSession('Tracking period completed (1 hour limit)');
+                return;
+            }
+
+            var totalSec = Math.floor(remainingMs / 1000);
+            var mins = Math.floor(totalSec / 60);
+            var secs = totalSec % 60;
+            $('#pts-timer').text(mins + 'm ' + (secs < 10 ? '0' : '') + secs + 's');
+        }
+
+        function stopTrackingSession(reason) {
+            if (trackingInterval) clearInterval(trackingInterval);
+            if (timerCountdownInterval) clearInterval(timerCountdownInterval);
+            if (watchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
+            
+            localStorage.removeItem('pts_session_token');
+            localStorage.removeItem('pts_expires_at');
+            
+            $('#patient-location-widget').fadeOut();
+            console.log('[Patient Tracking]', reason || 'Tracking stopped');
+        }
+
+        function initTrackingSession(latitude, longitude) {
+            var existingToken = localStorage.getItem('pts_session_token');
+            var existingExpires = localStorage.getItem('pts_expires_at');
+            var now = new Date().getTime();
+
+            if (existingToken && existingExpires && parseInt(existingExpires) > now) {
+                expiresAtTimestamp = parseInt(existingExpires);
+                $('#patient-location-widget').fadeIn();
+                startPeriodicUpdates(existingToken);
+                return;
+            }
+
+            // Start new session on backend
+            $.ajax({
+                url: '{{ route("patient.location.start") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    latitude: latitude,
+                    longitude: longitude
+                },
+                success: function(res) {
+                    if (res.status === 'success') {
+                        localStorage.setItem('pts_session_token', res.session_token);
+                        var expMs = new Date(res.expires_at).getTime();
+                        localStorage.setItem('pts_expires_at', expMs);
+                        expiresAtTimestamp = expMs;
+
+                        $('#patient-location-widget').fadeIn();
+                        updateWidgetTimer();
+                        startPeriodicUpdates(res.session_token);
+                    }
+                },
+                error: function(err) {
+                    console.error('[Patient Tracking] Start session error:', err);
+                }
+            });
+        }
+
+        function startPeriodicUpdates(sessionToken) {
+            if (timerCountdownInterval) clearInterval(timerCountdownInterval);
+            timerCountdownInterval = setInterval(updateWidgetTimer, 1000);
+
+            function sendLocationPing(lat, lng, speed, accuracy) {
+                $.ajax({
+                    url: '{{ route("patient.location.update") }}',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        session_token: sessionToken,
+                        latitude: lat,
+                        longitude: lng,
+                        speed: speed || 0,
+                        accuracy: accuracy || 0
+                    },
+                    success: function(res) {
+                        if (res.status === 'expired') {
+                            stopTrackingSession('Session expired on server');
+                            return;
+                        }
+
+                        if (res.status === 'success') {
+                            var isWalking = (res.movement_status === 'walking');
+                            $('#pts-status-badge')
+                                .text(isWalking ? '🚶 Walking' : '🛑 Stopped')
+                                .css({
+                                    'background': isWalking ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                                    'color': isWalking ? '#60A5FA' : '#34D399'
+                                });
+                            
+                            $('#pts-speed').text((res.speed || 0).toFixed(1) + ' km/h');
+                        }
+                    }
+                });
+            }
+
+            // Continuous Geolocation Watch
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(function(pos) {
+                    sendLocationPing(pos.coords.latitude, pos.coords.longitude, pos.coords.speed, pos.coords.accuracy);
+                }, function(err) {
+                    console.warn('[Patient Tracking] watchPosition error:', err.message);
+                }, {
+                    enableHighAccuracy: true,
+                    maximumAge: 5000,
+                    timeout: 10000
+                });
+            }
+
+            // Fallback Interval Ping every 10 seconds
+            if (trackingInterval) clearInterval(trackingInterval);
+            trackingInterval = setInterval(function() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        sendLocationPing(pos.coords.latitude, pos.coords.longitude, pos.coords.speed, pos.coords.accuracy);
+                    });
+                }
+            }, 10000);
+        }
+
+        // Expose function globally to start tracking when permission is granted
+        window.startPatientTracking = initTrackingSession;
+
+        // Auto-resume or auto-start 1-hour tracking session on page load
+        $(document).ready(function() {
+            var token = localStorage.getItem('pts_session_token');
+            var expires = localStorage.getItem('pts_expires_at');
+            var now = new Date().getTime();
+
+            // Extract latitude and longitude from URL parameters or session
+            var urlParams = new URLSearchParams(window.location.search);
+            var paramLat = urlParams.get('latitude') || '{{ session("latitude") }}';
+            var paramLng = urlParams.get('longitude') || '{{ session("longitude") }}';
+
+            var hasValidParams = paramLat && paramLng && !isNaN(parseFloat(paramLat)) && !isNaN(parseFloat(paramLng));
+
+            if (hasValidParams) {
+                initTrackingSession(parseFloat(paramLat), parseFloat(paramLng));
+            } else if (token && expires && parseInt(expires) > now) {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        initTrackingSession(pos.coords.latitude, pos.coords.longitude);
+                    });
+                }
+            } else if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    initTrackingSession(pos.coords.latitude, pos.coords.longitude);
+                }, function(err) {
+                    console.log('[Patient Tracking] Awaiting location permission grant');
+                });
+            }
+        });
+    })();
+    </script>
+</body>
 
 </html>

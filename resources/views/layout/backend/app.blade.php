@@ -54,8 +54,10 @@
   <script src="{{asset('/backend/assets/js/bootstrap.min.js')}}"></script>
   <script src="{{asset('/backend/assets/plugins/slimscroll/jquery.slimscroll.min.js')}}"></script>
   <script src="{{asset('/backend/assets/plugins/raphael/raphael.min.js')}}"></script>
-  <script src="{{asset('/backend/assets/plugins/morris/morris.min.js')}}"></script>
-  <script src="{{asset('/backend/assets/js/chart.morris.js')}}"></script>
+  @if(Request::is('dashboard*'))
+    <script src="{{asset('/backend/assets/plugins/morris/morris.min.js')}}"></script>
+    <script src="{{asset('/backend/assets/js/chart.morris.js')}}"></script>
+  @endif
 	<script src="{{asset('/backend/assets/plugins/datatables/jquery.dataTables.min.js')}}"></script>
 	<script src="{{asset('/backend/assets/plugins/datatables/datatables.min.js')}}"></script>
 
@@ -91,6 +93,7 @@
         @endif
     });
   </script>
+  @yield('scripts')
 </body>
 
 

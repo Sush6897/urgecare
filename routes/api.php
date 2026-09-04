@@ -19,8 +19,8 @@ use App\Http\Controllers\AdminController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::get('/hospital',[AdminController::class,'hospital']);
-Route::post('/data-gps',[AdminController::class,'dataGPS']);
-Route::get('/alldata',[AdminController::class,'allData']);
-Route::post('/search',[AdminController::class,'Search']);
+// Route::get('/hospital',[AdminController::class,'hospital']);
+// Route::post('/data-gps',[AdminController::class,'dataGPS']);
+// Route::get('/alldata',[AdminController::class,'allData']);
+// Route::post('/search',[AdminController::class,'Search']);
 
