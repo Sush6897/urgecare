@@ -62,6 +62,11 @@
                         <i class="fa fa-question-circle" aria-hidden="true"></i> FAQ
                       </a>
                     </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="{{route('blogs.index')}}">
+                        <i class="fa fa-newspaper" aria-hidden="true"></i> Blog
+                      </a>
+                    </li>
                     <div class="action-btn d-flex">
                       
                       <li class="nav-item">
@@ -111,6 +116,9 @@
               </li>
               <li class="nav-item">
                 <a class="nav-link"  href="{{url('/faq')}}">FAQ</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link"  href="{{route('blogs.index')}}">Blog</a>
               </li>
               <div class="mobile-btn d-flex">
                 <li class="nav-item">

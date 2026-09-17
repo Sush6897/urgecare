@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Hospital;
 use App\Models\UserVisit;
+use App\Models\Blog;
 use App\Services\ExotelService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -692,5 +693,23 @@ BACKUP: ORIGINAL SLOW IMPLEMENTATION (Multiple Google Geocoding calls)
 
         $hospital = $hospital->limit(3)->get();
         return view('frontend.nonemergency', compact('hospital'));
+    }
+
+    public function blogs()
+    {
+        $blogs = Blog::where('status', 'active')->latest()->paginate(9);
+        return view('frontend.blog.index', compact('blogs'));
+    }
+
+    public function blogDetail($slug)
+    {
+        $blog = Blog::where('slug', $slug)->where('status', 'active')->firstOrFail();
+        $recentBlogs = Blog::where('status', 'active')
+            ->where('id', '!=', $blog->id)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('frontend.blog.detail', compact('blog', 'recentBlogs'));
     }
 }

@@ -26,6 +26,9 @@
             <li class="{{ Request::is('admin/faq*') ? 'active' : '' }}">
               <a href="{{Route('admin.faq.index')}}"><i class="fe fe-question"></i> <span>FAQ</span></a>
             </li>
+            <li class="{{ Request::is('admin/blog*') ? 'active' : '' }}">
+              <a href="{{Route('admin.blog.index')}}"><i class="fe fe-file-text"></i> <span>Blogs</span></a>
+            </li>
            
             <li class="{{ Request::is('profile*') ? 'active' : '' }}">
               <a href="{{route('profile')}}"><i class="fe fe-user-plus"></i> <span>Profile</span></a>
