@@ -73,6 +73,20 @@ class FrontendController extends Controller
         return view('frontend.faq', compact('faqs'));
     }
 
+    public function blogs()
+    {
+        $blogs = Blog::where('status', 'active')
+            ->latest('published_at')
+            ->paginate(9);
+        return view('frontend.blogs', compact('blogs'));
+    }
+
+    public function blogDetail($slug)
+    {
+        $blog = Blog::where('slug', $slug)->where('status', 'active')->firstOrFail();
+        return view('frontend.blog_detail', compact('blog'));
+    }
+
     public function setcoordinates(Request $request)
     {
         $latitude = $request->query('latitude');
@@ -695,21 +709,21 @@ BACKUP: ORIGINAL SLOW IMPLEMENTATION (Multiple Google Geocoding calls)
         return view('frontend.nonemergency', compact('hospital'));
     }
 
-    public function blogs()
-    {
-        $blogs = Blog::where('status', 'active')->latest()->paginate(9);
-        return view('frontend.blog.index', compact('blogs'));
-    }
+    // public function blogs()
+    // {
+    //     $blogs = Blog::where('status', 'active')->latest()->paginate(9);
+    //     return view('frontend.blog.index', compact('blogs'));
+    // }
 
-    public function blogDetail($slug)
-    {
-        $blog = Blog::where('slug', $slug)->where('status', 'active')->firstOrFail();
-        $recentBlogs = Blog::where('status', 'active')
-            ->where('id', '!=', $blog->id)
-            ->latest()
-            ->take(5)
-            ->get();
+    // public function blogDetail($slug)
+    // {
+    //     $blog = Blog::where('slug', $slug)->where('status', 'active')->firstOrFail();
+    //     $recentBlogs = Blog::where('status', 'active')
+    //         ->where('id', '!=', $blog->id)
+    //         ->latest()
+    //         ->take(5)
+    //         ->get();
 
-        return view('frontend.blog.detail', compact('blog', 'recentBlogs'));
-    }
+    //     return view('frontend.blog.detail', compact('blog', 'recentBlogs'));
+    // }
 }

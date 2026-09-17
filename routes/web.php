@@ -14,7 +14,6 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ZohoController;
 use App\Http\Controllers\UserVisitController;
 use App\Http\Controllers\FaqController;
-use App\Http\Controllers\PatientLocationController;
 use App\Http\Controllers\BlogController;
 
 
@@ -72,9 +71,6 @@ Route::resource('hospital', HospitalController::class)->middleware('auth');
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('faq', FaqController::class);
     Route::resource('blog', BlogController::class);
-    Route::get('/patient-tracking', [PatientLocationController::class, 'adminIndex'])->name('patient-tracking');
-    Route::get('/patient-tracking/api/active', [PatientLocationController::class, 'getActiveSessions'])->name('patient-tracking.api.active');
-    Route::get('/patient-tracking/api/session/{id}', [PatientLocationController::class, 'getSessionTrack'])->name('patient-tracking.api.session');
 });
 Route::resource('setting', SettingController::class)->only(['index', 'create', 'store'])->middleware('auth');
 Route::get('/hospitals/trash', [HospitalController::class, 'trash'])->middleware('auth')->name('hospital.trash');
