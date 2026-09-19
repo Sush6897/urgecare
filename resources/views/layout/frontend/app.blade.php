@@ -5,7 +5,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home - Urgecare Ambulance Service in Pune</title>
+  <title>@yield('title', 'Urgecare Ambulance Service in Pune')</title>
+  @yield('meta')
   <link href="{{asset('/frontend/assets/style.css')}}" rel="stylesheet" />
     <link rel="shortcut icon" type="image/x-icon" href="{{asset('/backend/assets/img/favicon1.png')}}">
     <link rel="stylesheet" href="{{asset('/backend/assets/css/izitoast.min.css')}}">

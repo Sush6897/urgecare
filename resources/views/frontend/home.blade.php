@@ -1,4 +1,11 @@
 @extends('layout.frontend.app')
+
+@section('title', 'Ambulance Service in Pune | 24/7 ICU & Emergency Ambulance')
+
+@section('meta')
+<meta name="description" content="24/7 ambulance service in Pune. ICU, oxygen & emergency ambulance available within 15 minutes. Call now.">
+@endsection
+
 @section('content')
 
 <section class="search py-5">
