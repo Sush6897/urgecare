@@ -691,6 +691,42 @@ BACKUP: ORIGINAL SLOW IMPLEMENTATION (Multiple Google Geocoding calls)
         return view('frontend.partner');
     }
 
+    public function ambulanceServiceInPune()
+    {
+        // dd("123");
+        return view('frontend.ambulanceserviceinpune');
+    }
+
+    public function emergencyAmbulanceServiceInPune()
+    {
+        return view('frontend.emergencyambulanceserviceinpune');
+    }
+
+    public function privateAmbulanceServiceNearMe()
+    {
+        return view('frontend.privateambulanceservicenearme');
+    }
+
+    public function trainAmbulanceService()
+    {
+        return view('frontend.trainambulanceservice');
+    }
+
+    public function airAmbulanceService()
+    {
+        return view('frontend.airambulanceservice');
+    }
+
+    public function puneAmbulanceNumber()
+    {
+        return view('frontend.puneambulancenumber');
+    }
+
+    public function icuAmbulanceService()
+    {
+        return view('frontend.icuambulanceservice');
+    }
+
     public function nonEmergency(Request $request)
     {
         $hospital = Hospital::where('emergency', 1)->where('status', 'active');

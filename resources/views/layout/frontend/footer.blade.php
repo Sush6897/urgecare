@@ -13,14 +13,14 @@
       </ul>
       
       <ul class="footer-links">
-        <li><a href="https://urgecare.in/Urgecare/ambulanceserviceinpune.html">Ambulance Service In Pune</a></li>
-        <li><a href="https://urgecare.in/Urgecare/emergencyambulanceserviceinpune.html">Emergency Ambulance Service In Pune</a></li>
-        <li><a href="https://urgecare.in/Urgecare/privateambulanceservicenearme.html">Private Ambulance Service Near Me in Pune</a></li>
-        <li><a href="https://urgecare.in/Urgecare/trainambulanceservice.html">Train Ambulance Service in Pune</a></li>
+        <li><a href="{{ route('ambulance.service.pune') }}">Ambulance Service In Pune</a></li>
+        <li><a href="{{ route('emergency.ambulance.pune') }}">Emergency Ambulance Service In Pune</a></li>
+        <li><a href="{{ route('private.ambulance.near.me') }}">Private Ambulance Service Near Me in Pune</a></li>
+        <li><a href="{{ route('train.ambulance.pune') }}">Train Ambulance Service in Pune</a></li>
 
-        <li><a href="https://urgecare.in/Urgecare/airambulanceservice.html">Air Ambulance Service in Pune</a></li>
-        <li><a href="https://urgecare.in/Urgecare/puneambulancenumber.html">Pune Ambulance Number in Pune</a></li>
-        <li><a href="https://urgecare.in/Urgecare/icuambulanceservice.html">ICU Ambulance Service in Pune</a></li>
+        <li><a href="{{ route('air.ambulance.pune') }}">Air Ambulance Service in Pune</a></li>
+        <li><a href="{{ route('pune.ambulance.number') }}">Pune Ambulance Number in Pune</a></li>
+        <li><a href="{{ route('icu.ambulance.pune') }}">ICU Ambulance Service in Pune</a></li>
       </ul>
       <hr>
 

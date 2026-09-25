@@ -32,6 +32,7 @@
    gtag('event', 'conversion', {'send_to': 'AW-11032053469/FQCBCMzW35sZEN2Nv4wp'});
     </script>
   <!-- Font Awesome -->
+  @yield('styles')
 </head>
 <body>
   @include('layout.frontend.header')
@@ -197,6 +198,7 @@
     });
     </script>
 
+  @yield('scripts')
 </body>
 
 
