@@ -61,9 +61,9 @@
 
   @yield('content')
   <form id="location-form" action="{{route('set.coordinates')}}" method="get">
-    
     <input type="hidden" id="latitude" name="latitude" value="">
     <input type="hidden" id="longitude" name="longitude" value="">
+    <input type="hidden" id="location-redirect" name="redirect" value="">
 </form>
 
   @include('layout.frontend.footer')
@@ -88,6 +88,11 @@
       }
     });
    
+    function shareLocationAndStay() {
+        $('#location-form input[name="redirect"]').val(window.location.pathname + window.location.search);
+        getLocationAndSubmitForm();
+    }
+
     function getLocationAndSubmitForm() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {

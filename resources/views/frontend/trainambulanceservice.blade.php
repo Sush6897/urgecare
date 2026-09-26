@@ -1,9 +1,9 @@
 @extends('layout.frontend.app')
 
-@section('title', 'Train Ambulance Service in Pune | 24/7 Medical Rail Transport - Urgecare')
+@section('title', 'Train Ambulance Service in Pune | ICU Train Transfer 24/7')
 
 @section('meta')
-<meta name="description" content="Urgecare offers reliable Train Ambulance Service in Pune with 24/7 emergency support, trained medical staff, & quick patient transport for safe and timely care.">
+<meta name="description" content="Book train ambulance service in Pune and nationwide for long-distance patient transfer. ICU setup, doctor support & 24/7 assistance. Call now for fast arrangement.">
 @endsection
 
 @section('styles')
@@ -139,6 +139,8 @@
 <div class="banner">
   <img class="banner-img" src="{{ asset('Urgecare/images_webp/images/trinbanner.webp') }}" alt="Train ambulance service in Pune" />
 </div>
+
+@include('frontend.partials.location_access_button')
 
 <div class="container">
   <h1>Train Ambulance Service in Pune</h1>

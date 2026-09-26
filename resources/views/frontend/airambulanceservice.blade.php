@@ -1,9 +1,9 @@
 @extends('layout.frontend.app')
 
-@section('title', 'Air Ambulance Service in Pune | 24/7 Emergency Medical Flight - Urgecare')
+@section('title', 'Air Ambulance Service in Pune | ICU Air Transfer 24/7')
 
 @section('meta')
-<meta name="description" content="Urgecare offers reliable and fast Air Ambulance Service in Pune, providing 24/7 emergency medical support, Transport, and critical care when every second counts.">
+<meta name="description" content="Book air ambulance service in Pune and nationwide for critical patient transfer. ICU setup, doctor support & fast evacuation. Available 24/7. Call now.">
 @endsection
 
 @section('styles')
@@ -182,6 +182,8 @@
 <div class="banner">
   <img src="{{ asset('Urgecare/images_webp/images/Air-Ambulance.webp') }}" alt="Air Ambulance Service in Pune" />
 </div>
+
+@include('frontend.partials.location_access_button')
 
 <div class="container">
 

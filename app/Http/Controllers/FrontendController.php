@@ -110,11 +110,25 @@ class FrontendController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
+        $redirect = $request->query('redirect');
+        if ($redirect && $this->isSafeInternalRedirect($redirect)) {
+            return redirect($redirect)->with('success', 'Your location has been saved successfully.');
+        }
+
         // Redirect with coordinates as fallback params to avoid session loss issues on live
         return redirect()->route('longitude', [
             'latitude' => $latitude,
             'longitude' => $longitude
         ]);
+    }
+
+    private function isSafeInternalRedirect(string $url): bool
+    {
+        if (! str_starts_with($url, '/') || str_starts_with($url, '//')) {
+            return false;
+        }
+
+        return ! str_contains($url, '://');
     }
 
 

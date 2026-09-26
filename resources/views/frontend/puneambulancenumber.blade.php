@@ -1,9 +1,9 @@
 @extends('layout.frontend.app')
 
-@section('title', 'Pune Ambulance Number in Pune | 24/7 Emergency Helpline - Urgecare')
+@section('title', 'Pune Ambulance Number | 24/7 Emergency Ambulance – Call Now')
 
 @section('meta')
-<meta name="description" content="Get the reliable Pune Ambulance Number in Pune at Urgecare.in for 24/7 emergency ambulance services. Quick response, expert medical support, & patient transport.">
+<meta name="description" content="Looking for ambulance number in pune and nationwide. Call now for 24/7 emergency ambulance. ICU, oxygen & fast response within 15 minutes across Pune.">
 @endsection
 
 @section('styles')
@@ -138,6 +138,8 @@
 <div class="banner">
   <img class="banner-img" src="{{ asset('Urgecare/images_webp/images/search-bg.webp') }}" alt="Pune Ambulance Number in Pune" />
 </div>
+
+@include('frontend.partials.location_access_button')
 
 <div class="container">
   <h1>Pune Ambulance Number in Pune</h1>

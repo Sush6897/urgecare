@@ -1,9 +1,9 @@
 @extends('layout.frontend.app')
 
-@section('title', 'Private Ambulance Service Near Me in Pune | 24/7 Medical Transport - Urgecare')
+@section('title', 'Private Ambulance Service Near Me in Pune | 24/7 Call Now')
 
 @section('meta')
-<meta name="description" content="Get fast and reliable Private Ambulance Service Near Me in Pune with Urgecare.in. Our emergency medical transports ensures safety, speeds, and expert care 24/7.">
+<meta name="description" content="Searching private ambulance service near me in Pune and nationwide. Call now for 24/7 ICU, oxygen & emergency ambulance with fast response within 15 minutes.">
 @endsection
 
 @section('styles')
@@ -182,6 +182,8 @@
 <div class="banner">
   <img src="{{ asset('Urgecare/images_webp/images/amb banner.webp') }}" alt="Private Ambulance Service Near Me in Pune" />
 </div>
+
+@include('frontend.partials.location_access_button')
 
 <div class="container">
 

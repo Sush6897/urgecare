@@ -1,9 +1,9 @@
 @extends('layout.frontend.app')
 
-@section('title', 'Emergency Ambulance Service In Pune | 24/7 ICU & ALS Ambulance - Urgecare')
+@section('title', 'Emergency Ambulance Service in Pune | 24/7 ICU & Oxygen Ambulance')
 
 @section('meta')
-<meta name="description" content="Get fast and reliable Emergency Ambulance Service in Pune with Urgecare.in. Our 24/7 ambulance supports ensures quick responses and safe transports across Pune.">
+<meta name="description" content="Need emergency ambulance service in Pune and nationwide. Call now for 24/7 ICU, oxygen & fast response ambulance within 15 minutes. Available across Pune.">
 @endsection
 
 @section('styles')
@@ -101,6 +101,8 @@
 <div class="banner">
   <img src="{{ asset('Urgecare/images_webp/images/ambulance-banner.webp') }}" alt="Emergency Ambulance Service In Pune" />
 </div>
+
+@include('frontend.partials.location_access_button')
 
 <div class="container">
 
