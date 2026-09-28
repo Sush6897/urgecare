@@ -183,7 +183,26 @@
   <img src="{{ asset('Urgecare/images_webp/images/amb banner.webp') }}" alt="Private Ambulance Service Near Me in Pune" />
 </div>
 
-@include('frontend.partials.location_access_button')
+<div class="modal fade" id="locationModal" tabindex="-1" role="dialog" aria-labelledby="locationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="locationModalLabel">Allow Location Access</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Give access to your location for nearest ambulance
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="yesBtn">Yes</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <div class="container">
 
@@ -281,6 +300,57 @@
 <script>
   AOS.init({
     duration: 1200,
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+      @if(!Session::has('success'))
+      $('#locationModal').modal('show');
+      @endif
+
+      var yesBtn = document.getElementById('yesBtn');
+      if (yesBtn) {
+          yesBtn.addEventListener('click', function() {
+              $('#global-loader').removeClass('fade-out');
+
+              localStorage.removeItem('latitude');
+              localStorage.removeItem('longitude');
+              $('#location-form input[name="redirect"]').val(window.location.pathname + window.location.search);
+
+              if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(function(position) {
+                      var latitude = position.coords.latitude;
+                      var longitude = position.coords.longitude;
+
+                      localStorage.setItem('latitude', latitude);
+                      localStorage.setItem('longitude', longitude);
+
+                      $('#location-form input[name="latitude"]').val(latitude);
+                      $('#location-form input[name="longitude"]').val(longitude);
+                      $('#location-form').submit();
+                  }, function(error) {
+                      $('#global-loader').addClass('fade-out');
+                      switch (error.code) {
+                          case error.PERMISSION_DENIED:
+                              alert('User denied the request for Geolocation.');
+                              break;
+                          case error.POSITION_UNAVAILABLE:
+                              alert('Location information is unavailable.');
+                              break;
+                          case error.TIMEOUT:
+                              alert('The request to get user location timed out.');
+                              break;
+                          default:
+                              alert('An unknown error occurred.');
+                      }
+                  });
+              } else {
+                  $('#global-loader').addClass('fade-out');
+                  alert('Geolocation is not supported by this browser.');
+              }
+
+              $('#locationModal').modal('hide');
+          });
+      }
   });
 </script>
 @endsection
