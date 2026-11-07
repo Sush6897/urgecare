@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -14,15 +13,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Use CHANGE for older MariaDB that doesn't support RENAME COLUMN
-        DB::statement('ALTER TABLE `blogs` CHANGE `name` `title` VARCHAR(255) NOT NULL');
-        DB::statement('ALTER TABLE `blogs` CHANGE `description` `content` LONGTEXT NOT NULL');
+        if (Schema::hasColumn('blogs', 'name') && ! Schema::hasColumn('blogs', 'title')) {
+            Schema::table('blogs', fn (Blueprint $table) => $table->renameColumn('name', 'title'));
+        }
+
+        if (Schema::hasColumn('blogs', 'description') && ! Schema::hasColumn('blogs', 'content')) {
+            Schema::table('blogs', fn (Blueprint $table) => $table->renameColumn('description', 'content'));
+        }
 
         Schema::table('blogs', function (Blueprint $table) {
-            $table->string('excerpt')->nullable()->after('content');
-            $table->string('author')->nullable()->after('excerpt');
-            $table->string('category')->nullable()->after('author');
-            $table->timestamp('published_at')->nullable()->after('category');
+            foreach (['excerpt', 'author', 'category'] as $column) {
+                if (! Schema::hasColumn('blogs', $column)) {
+                    $table->string($column)->nullable();
+                }
+            }
+
+            if (! Schema::hasColumn('blogs', 'published_at')) {
+                $table->timestamp('published_at')->nullable();
+            }
         });
     }
 
@@ -31,11 +39,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('blogs', function (Blueprint $table) {
-            $table->dropColumn(['excerpt', 'author', 'category', 'published_at']);
-        });
-
-        DB::statement('ALTER TABLE `blogs` CHANGE `title` `name` VARCHAR(255) NOT NULL');
-        DB::statement('ALTER TABLE `blogs` CHANGE `content` `description` LONGTEXT NOT NULL');
+        // This compatibility migration may perform no changes on modern schemas.
+        // Keep data and columns owned by the original create migration on rollback.
     }
 };

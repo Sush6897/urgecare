@@ -329,9 +329,7 @@
   });
 
   document.addEventListener('DOMContentLoaded', function() {
-      @if(!Session::has('success'))
-      $('#locationModal').modal('show');
-      @endif
+      showLocationPromptIfNeeded();
 
       var yesBtn = document.getElementById('yesBtn');
       if (yesBtn) {

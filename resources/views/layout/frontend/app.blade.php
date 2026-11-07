@@ -203,6 +203,8 @@
     });
     </script>
 
+  <script src="{{ asset('/frontend/assets/location-access.js') }}"
+          data-has-location="{{ session()->has(['latitude', 'longitude']) ? 'true' : 'false' }}"></script>
   @yield('scripts')
 </body>
 

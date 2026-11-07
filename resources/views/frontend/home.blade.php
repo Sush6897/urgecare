@@ -160,7 +160,7 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         // Show the modal on page load
-        $('#locationModal').modal('show');
+        showLocationPromptIfNeeded();
 
         // Handle "Yes" button click
         document.getElementById('yesBtn').addEventListener('click', function() {
